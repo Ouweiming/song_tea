@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 
-const AnimatedBlock = ({ delay = 0, direction = 'left' }) => {
+const AnimatedBlock = ({ delay = 0, direction = 'left', content }) => {
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.5,
@@ -18,7 +18,7 @@ const AnimatedBlock = ({ delay = 0, direction = 'left' }) => {
   };
 
   return (
-    <div ref={ref} className="py-16 flex justify-center items-center align-middle "> {/* 修改这里 */}
+    <div ref={ref} className="py-8 flex justify-center items-center w-full">
       <motion.div
         {...animationConfig}
         whileHover={{
@@ -29,25 +29,46 @@ const AnimatedBlock = ({ delay = 0, direction = 'left' }) => {
             damping: 50,
           }
         }}
-        className="flex items-center justify-center align-middle w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-5/6 h-auto bg-white shadow-lg rounded-lg p-6"
+        className="flex flex-col sm:flex-row items-center justify-center w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-5xl bg-white shadow-lg rounded-lg p-4 sm:p-6 md:p-8 h-auto sm:h-[75px] md:h-[100px] lg:h-[150px] xl:h-[175px] 2xl:h-[200px]"
       >
-<h2 className="text-black dark:text-emerald-700 text-xl font-bold mb-4 text-center">Animated Block</h2>
-<p className="text-black dark:text-emerald-300 text-center leading-relaxed">This block animates when it enters the viewport. Scroll down to see the effect.</p>
+<div className="flex flex-col items-center justify-center">
+  <h2 className="text-emerald-500 dark:text-emerald-700 text-xl sm:text-2xl md:text-3xl font-bold mb-4 text-start">{content.title}</h2>
+  <p className="text-emerald-800 dark:text-emerald-500 text-center text-lg sm:text-xl md:text-2xl leading-relaxed">{content.paragraph}</p>
+</div>
       </motion.div>
     </div>
   );
 };
 
-// 使用示例
-const block = () => {
+const Block = () => {
+  const content1 = {
+    title: "产品类型：",
+    paragraph: "主打产品系列（玉兰香、芝兰香、翠玉香、密兰香，不同香型的“宋茶单丛”）衍生产品系列（茶宠盲盒、IP周边原创）"
+  };
+
+  const content2 = {
+    title: "特色介绍：",
+    paragraph: "在茶叶生产中，我们致力于让茶叶自然地生长，打造一款品质纯净、健康，安全的有机生态茶叶。在产品推出中，针对用户的不同需求，后花园宋茶推出不同包装规格与包装类型，为用户提供多样化的选择。"
+  };
+
+  const content3 = {
+    title: "文化价值：",
+    paragraph: "后花园宋茶的文化价值体现在其药用价值及丰富的历史文化内涵。它不仅与宋朝逃亡故事紧密相关，还因其独特的生长环境和稀有性成为珍贵文化遗产。宋茶的传说增添了其神秘色彩，使其成为不仅具有治疗功效，也承载深厚文化历史价值的符号。"
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-12 bg-gray-100 dark:bg-inherit">
-      <h1 className="text-3xl font-bold mb-8 text-black dark:text-white">Scroll-triggered Animations</h1>
-      <AnimatedBlock delay={0.1} direction="left" />
-      <AnimatedBlock delay={0.2} direction="right" />
-      <AnimatedBlock delay={0.3} direction="left" />
+    <div className="flex gap-12 flex-col p-4 items-center justify-center min-h-screen py-24 bg-inherit dark:bg-inherit">
+<h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 sm:mb-6 md:mb-8 text-emerald-800 dark:text-white">
+  茶叶产品：
+  <span className="text-green-600 dark:text-emerald-500">
+    岛屿记忆-后花园宋茶
+  </span>
+</h1>
+      <AnimatedBlock delay={0.1} direction="left" content={content1} />
+      <AnimatedBlock delay={0.2} direction="right" content={content2} />
+      <AnimatedBlock delay={0.3} direction="left" content={content3} />
     </div>
   );
 };
 
-export default block;
+export default Block;

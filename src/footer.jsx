@@ -1,44 +1,32 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
-import { motion } from 'framer-motion'; // 导入 motion
-import { useInView } from 'react-intersection-observer'; // 导入 useInView
 
 const Footer = () => {
   const [subscribed, setSubscribed] = useState(false);
   const [email, setEmail] = useState('');
-  const { ref, inView } = useInView({
-    /* 触发动画的视口阈值 */
-    threshold: 0.1,
-    triggerOnce: true // 仅触发一次
-  });
+  const [emailError, setEmailError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // 添加订阅逻辑
+    // 检查电子邮件是否为空或不符合格式
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('请输入合法的邮箱信息');
+      return;
+    }
 
+    // 添加订阅逻辑
     setSubscribed(true);
     setEmail('');
+    setEmailError(''); // 清除错误消息
 
     setTimeout(() => {
       setSubscribed(false);
     }, 3000);
   };
 
-  // 定义动画属性
-  const footerVariants = {
-    hidden: { y: -100, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 2 } },
-  };
-
   return (
-    <motion.footer
-      ref={ref} // 将 ref 应用到 footer 元素
-      initial="hidden"
-      animate={inView ? "visible" : "hidden"} // 根据 inView 状态决定是否触发动画
-      variants={footerVariants} // 应用动画属性
-      className="bg-white dark:bg-gray-800 text-dark dark:text-white py-8 mt-16"
-    >
+    <footer className="bg-white dark:bg-gray-800 text-dark dark:text-white py-8 mt-16">
       <div className="container mx-auto px-4">
         <div className="flex flex-wrap justify-between">
           <div className="w-full md:w-1/3 mb-8 md:mb-0">
@@ -68,6 +56,7 @@ const Footer = () => {
                   订阅
                 </button>
               </div>
+              {emailError && <p className="text-red-500">{emailError}</p>}
             </form>
           </div>
         </div>
@@ -75,12 +64,12 @@ const Footer = () => {
         {/* 居中显示感谢订阅消息 */}
         <div className="mt-4 text-center">
           {subscribed && (
-            <p className="text-green-500">感谢您的信赖！</p>
+            <p className="text-green-500 text-2xl ">感谢您的信赖！</p>
           )}
         </div>
 
         <div className="mt-10 border-t border-gray-700 pt-8 text-center">
-          <p>© 2024 咩🐑. All Rights Reserved.</p>
+          <p>&copy;2024 嗜茶小皇帝. All Rights Reserved.</p>
           <p className="mt-2">
             Made with {" "}
             <FontAwesomeIcon
@@ -88,11 +77,11 @@ const Footer = () => {
               style={{ color: '#63E6BE' }}
               className="mx-1"
             />
-            by 咩🐑
+            by 咩
           </p>
         </div>
       </div>
-    </motion.footer>
+    </footer>
   );
 };
 

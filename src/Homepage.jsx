@@ -5,13 +5,13 @@ import Block from './Block';
 import Introduction from './Introduction';
 import VideoSection from './Video';
 import 'highlight.js/styles/github.css'; // 导入高亮样式
-import { motion } from 'framer-motion';
 import Header from './header';
 import Footer from './footer';
 import pig from './assets/pig.png';
 import { useTheme } from './theme-provider';
-import ShoppingCart from './ShoppingCart';
 import Photowall from './Photowall';
+import ShoppingCartList from './ShoppingCartList';
+import ContactForm from './Contact';
 
 const Homepage = () => {
   const { theme } = useTheme();
@@ -65,26 +65,22 @@ const Homepage = () => {
   return (
     <>
       <FloatButton.BackTop/>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ ease: "easeInOut", duration: 2 }}
-      >
-        <div className={`flex flex-col min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
+      <div>
+<div className={`flex flex-col min-h-screen ${theme === 'dark' ? 'dark' : 'bg-gradient-to-r from-customgradient1 to-customgradient_1'}`}>
           <Header />
           <div className="relative flex flex-col flex-1">
             <VideoSection />
           </div>
+
           <MainContent />
           <Introduction />
           <Photowall /> 
-          <ShoppingCart />
           <Block />
-          
+          <ShoppingCartList />
+          <ContactForm/>
           <Footer />
         </div>
-      </motion.div>
+      </div>
     </>
   );
 };

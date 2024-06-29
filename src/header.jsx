@@ -1,15 +1,5 @@
 import React from "react";
-import {
-  Navbar,
-  NavbarBrand,
-  NavbarMenuToggle,
-  NavbarMenuItem,
-  NavbarMenu,
-  NavbarContent,
-  NavbarItem,
-  Link,
-  Button
-} from "@nextui-org/react";
+import {Navbar, NavbarBrand, NavbarMenuToggle, NavbarMenuItem, NavbarMenu, NavbarContent, NavbarItem, Link, Button } from "@nextui-org/react";
 import { FiSun, FiMoon } from 'react-icons/fi';
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from './theme-provider';
@@ -49,13 +39,13 @@ export default function App() {
             className={`mr-6 w-16 h-16 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
             initial={{ opacity: 0, rotate: -180 }}
             animate={{ opacity: 1, rotate: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 1.0, delay: 0.2 }}
           />
           <motion.p
             className={`font-bold text-lg ${theme === 'dark' ? 'text-emerald-600' : 'text-green-600'}`}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 1.0, delay: 0.4 }}
           >
             后花园庄
           </motion.p>
@@ -70,13 +60,13 @@ export default function App() {
             className={`mr-6 w-16 h-16 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
             initial={{ opacity: 0, rotate: -180 }}
             animate={{ opacity: 1, rotate: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 1.0, delay: 0.2 }}
           />
           <motion.p
             className={`font-bold text-2xl ${theme === 'dark' ? 'text-emerald-600' : 'text-green-600'}`}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 1.0, delay: 0.4 }}
           >
             后花园庄
           </motion.p>
