@@ -66,7 +66,7 @@ const Introduction = () => {
         <div className="flex-1 space-y-8 text-left"> {/* 添加 text-left 类 */}
           <motion.h1 
             ref={refH1First}
-            className="text-3xl md:text-4xl lg:text-5xl font-bold text-emerald-600"
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-emerald-600 dark:text-emerald-400"
             {...animationConfigH1First}
           >
             后花园村介绍
@@ -85,7 +85,7 @@ const Introduction = () => {
         <div className="flex-1 space-y-8 text-right"> {/* 添加 text-right 类 */}
           <motion.h1 
             ref={refH1Second}
-            className="text-3xl md:text-4xl lg:text-5xl font-bold text-emerald-600"
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-emerald-600 dark:text-emerald-400"
             {...animationConfigH1Second}
           >
             宋茶品牌理念

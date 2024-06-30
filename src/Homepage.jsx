@@ -10,8 +10,8 @@ import Footer from './footer';
 import pig from './assets/pig.png';
 import { useTheme } from './theme-provider';
 import Photowall from './Photowall';
-import ShoppingCartList from './ShoppingCartList';
 import ContactForm from './Contact';
+import ShoppingCartList from './ShoppingCartList';
 
 const Homepage = () => {
   const { theme } = useTheme();
@@ -30,7 +30,7 @@ const Homepage = () => {
         {/* 侧边栏图标 */}
         <div onClick={toggleSidebar}>
           <FloatButton
-            tooltip={<div>Data Visualization</div>}
+            tooltip={<div>客服服务</div>}
             className={`fixed top-1/2 transform-gpu transition-transform duration-500 ${isFloatButtonRotated ? 'rotate-180' : ''}`} // 使用 Tailwind CSS 类实现按钮旋转
             icon={<div><img src={pig} alt="svg" /></div>}
           />
@@ -52,11 +52,11 @@ const Homepage = () => {
 
     return (
       <animated.aside
-        className="flex rounded-3xl fixed right-0 top-1/4 max-h-full bg-white bg-opacity-65 overflow-y-auto z-50"
+        className="flex rounded-3xl fixed right-16 top-1/2 max-h-full bg-white bg-opacity-65 overflow-y-auto z-50"
         style={sidebarAnimation}
       >
         <div className="flex flex-col flex-wrap justify-center items-center h-full px-4 py-2">
-          <p className='flex justify-center text-cyan-700 font-bold text-lg'>Hah!You found me!</p>
+          <p className='flex justify-center text-cyan-700 font-bold text-lg'>正在努力开发中~</p>
         </div>
       </animated.aside>
     );
@@ -66,7 +66,7 @@ const Homepage = () => {
     <>
       <FloatButton.BackTop/>
       <div>
-<div className={`flex flex-col min-h-screen ${theme === 'dark' ? 'dark' : 'bg-gradient-to-r from-customgradient1 to-customgradient_1'}`}>
+<div className={`flex flex-col min-h-screen ${theme === 'dark' ? 'bg-gradient-to-r from-customgradient2 to-customgradient_2' : 'bg-gradient-to-r from-customgradient1 to-customgradient_1'}`}>
           <Header />
           <div className="relative flex flex-col flex-1">
             <VideoSection />
@@ -76,7 +76,7 @@ const Homepage = () => {
           <Introduction />
           <Photowall /> 
           <Block />
-          <ShoppingCartList />
+          <ShoppingCartList/>
           <ContactForm/>
           <Footer />
         </div>

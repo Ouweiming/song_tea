@@ -26,7 +26,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-white dark:bg-gray-800 text-dark dark:text-white py-8 mt-16">
+    <footer className="bg-white dark:bg-gray-800 text-dark dark:text-white py-8">
       <div className="container mx-auto px-4">
         <div className="flex flex-wrap justify-between">
           <div className="w-full md:w-1/3 mb-8 md:mb-0">
@@ -69,7 +69,7 @@ const Footer = () => {
         </div>
 
         <div className="mt-10 border-t border-gray-700 pt-8 text-center">
-          <p>&copy;2024 嗜茶小皇帝. All Rights Reserved.</p>
+          <p>&copy;2024 醉茶小皇帝. All Rights Reserved.</p>
           <p className="mt-2">
             Made with {" "}
             <FontAwesomeIcon

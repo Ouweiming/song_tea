@@ -29,11 +29,11 @@ const AnimatedBlock = ({ delay = 0, direction = 'left', content }) => {
             damping: 50,
           }
         }}
-        className="flex flex-col sm:flex-row items-center justify-center w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-5xl bg-white shadow-lg rounded-lg p-4 sm:p-6 md:p-8 h-auto sm:h-[75px] md:h-[100px] lg:h-[150px] xl:h-[175px] 2xl:h-[200px]"
+    className="flex flex-col sm:flex-row items-center justify-center w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-5xl bg-white dark:bg-gray-300 bg-opacity-90 shadow-lg rounded-lg p-4 sm:p-6 md:p-8"
       >
-<div className="flex flex-col items-center justify-center">
-  <h2 className="text-emerald-500 dark:text-emerald-700 text-xl sm:text-2xl md:text-3xl font-bold mb-4 text-start">{content.title}</h2>
-  <p className="text-emerald-800 dark:text-emerald-500 text-center text-lg sm:text-xl md:text-2xl leading-relaxed">{content.paragraph}</p>
+<div className="flex flex-col items-center justify-center overflow-hidden">
+  <h2 className="text-emerald-500 dark:text-teal-600 text-xl sm:text-2xl md:text-3xl font-bold mb-4 text-start overflow-ellipsis whitespace-nowrap">{content.title}</h2>
+  <p className="text-emerald-800 dark:text-emerald-900 text-center text-lg sm:text-xl md:text-2xl leading-relaxed overflow-auto">{content.paragraph}</p>
 </div>
       </motion.div>
     </div>
@@ -58,9 +58,9 @@ const Block = () => {
 
   return (
     <div className="flex gap-12 flex-col p-4 items-center justify-center min-h-screen py-24 bg-inherit dark:bg-inherit">
-<h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 sm:mb-6 md:mb-8 text-emerald-800 dark:text-white">
+<h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 sm:mb-6 md:mb-8 text-emerald-800 dark:text-teal-500">
   茶叶产品：
-  <span className="text-green-600 dark:text-emerald-500">
+  <span className="text-green-600 dark:text-emerald-400">
     岛屿记忆-后花园宋茶
   </span>
 </h1>
