@@ -30,7 +30,7 @@ const Homepage = () => {
         {/* 侧边栏图标 */}
         <div onClick={toggleSidebar}>
           <FloatButton
-            tooltip={<div>客服服务</div>}
+            
             className={`fixed top-1/2 transform-gpu transition-transform duration-500 ${isFloatButtonRotated ? 'rotate-180' : ''}`} // 使用 Tailwind CSS 类实现按钮旋转
             icon={<div><img src={pig} alt="svg" /></div>}
           />
@@ -56,7 +56,7 @@ const Homepage = () => {
         style={sidebarAnimation}
       >
         <div className="flex flex-col flex-wrap justify-center items-center h-full px-4 py-2">
-          <p className='flex justify-center text-cyan-700 font-bold text-lg'>正在努力开发中~</p>
+          <p className='flex justify-center text-cyan-700 font-bold text-lg'>其余板块正在努力开发中~</p>
         </div>
       </animated.aside>
     );

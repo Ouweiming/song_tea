@@ -8,7 +8,7 @@ const AnimatedBlock = ({ delay = 0, direction = 'left', content }) => {
     threshold: 0.5,
   });
 
-  const xInitial = direction === 'left' ? -200 : 200;
+  const xInitial = direction === 'left' ? -30 : 30;
   const xEnd = 0;
 
   const animationConfig = {
