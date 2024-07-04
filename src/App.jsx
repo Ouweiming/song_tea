@@ -1,14 +1,14 @@
 // App.jsx
-import React from 'react';
-import Router from './router';
-import { ThemeProvider } from './theme-provider';
+import React from 'react'
+import Router from './router'
+import { ThemeProvider } from './theme-provider'
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme='dark' storageKey='vite-ui-theme'>
       <Router />
     </ThemeProvider>
-  );
+  )
 }
 
-export default App;
+export default App
