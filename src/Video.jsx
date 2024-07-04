@@ -13,7 +13,7 @@ const ReactPlayer = lazy(() => import('react-player'))
 // 新增的 Welcome 组件
 const Welcome = () => {
   return (
-    <div className='flex flex-col items-center justify-center w-full p-18 lg:p-48'>
+    <div className='flex flex-col items-center justify-center w-full p-18 mt-8 lg:p-48'>
       <div className='text-center'>
         <motion.div
           className='flex flex-col items-center justify-center'
