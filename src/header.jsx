@@ -1,20 +1,21 @@
-import React from 'react'
 import {
+  Button,
+  Link,
   Navbar,
   NavbarBrand,
-  NavbarMenuToggle,
-  NavbarMenuItem,
-  NavbarMenu,
   NavbarContent,
   NavbarItem,
-  Link,
-  Button,
+  NavbarMenu,
+  NavbarMenuItem,
+  NavbarMenuToggle,
 } from '@nextui-org/react'
-import { FiSun, FiMoon } from 'react-icons/fi'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useTheme } from './theme-provider'
+import { AnimatePresence, motion } from 'framer-motion'
+import React from 'react'
+import { FiMoon, FiSun } from 'react-icons/fi'
+
 import Logo from './assets/logo.svg'
 import './index.css'
+import { useTheme } from './theme-provider'
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
@@ -44,18 +45,18 @@ export default function App() {
         />
       </NavbarContent>
 
-      <NavbarContent className='sm:hidden pr-3' justify='center'>
+      <NavbarContent className='pr-3 sm:hidden' justify='center'>
         <NavbarBrand>
           <motion.img
             src={Logo}
             alt='Brand Icon'
-            className={`mr-6 w-16 h-16 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
+            className={`mr-6 h-16 w-16 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
             initial={{ opacity: 0, rotate: -180 }}
             animate={{ opacity: 1, rotate: 0 }}
             transition={{ duration: 1.0, delay: 0.2 }}
           />
           <motion.p
-            className={`font-bold text-lg ${theme === 'dark' ? 'text-emerald-600' : 'text-green-600'}`}
+            className={`text-lg font-bold ${theme === 'dark' ? 'text-emerald-600' : 'text-green-600'}`}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.0, delay: 0.4 }}
@@ -65,18 +66,18 @@ export default function App() {
         </NavbarBrand>
       </NavbarContent>
 
-      <NavbarContent className='hidden sm:flex gap-4' justify='center'>
+      <NavbarContent className='hidden gap-4 sm:flex' justify='center'>
         <NavbarBrand>
           <motion.img
             src={Logo}
             alt='Brand Icon'
-            className={`mr-6 w-16 h-16 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
+            className={`mr-6 h-16 w-16 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
             initial={{ opacity: 0, rotate: -180 }}
             animate={{ opacity: 1, rotate: 0 }}
             transition={{ duration: 1.0, delay: 0.2 }}
           />
           <motion.p
-            className={`font-bold text-2xl ${theme === 'dark' ? 'text-emerald-600' : 'text-green-600'}`}
+            className={`text-2xl font-bold ${theme === 'dark' ? 'text-emerald-600' : 'text-green-600'}`}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.0, delay: 0.4 }}
@@ -93,7 +94,7 @@ export default function App() {
             size='lg'
             variant='light'
             color='success'
-            className='p-2 rounded-full'
+            className='rounded-full p-2'
             onClick={handleToggle}
           >
             <motion.div

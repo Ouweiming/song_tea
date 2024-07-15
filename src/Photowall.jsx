@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+
 import village1 from './assets/village1.jpg'
 import village2 from './assets/village2.jpg'
 import village3 from './assets/village3.jpg'
@@ -42,14 +43,14 @@ function Photowall() {
   }, [])
 
   return (
-    <div className='flex flex-row overflow-x-auto snap-x snap-mandatory gap-x-4 p-4'>
+    <div className='flex snap-x snap-mandatory flex-row gap-x-4 overflow-x-auto p-4'>
       {images.map((src, index) => (
-        <div key={src} className='snap-center flex-shrink-0'>
+        <div key={src} className='flex-shrink-0 snap-center'>
           <img
             ref={el => (imageRefs.current[index] = el)}
             src={loaded[index] ? src : undefined}
             alt={`Village ${index + 1}`}
-            className='w-auto md:w-64 lg:w-96 h-96 object-cover rounded-lg shadow-lg transition duration-300 hover:scale-105'
+            className='h-96 w-auto rounded-lg object-cover shadow-lg transition duration-300 hover:scale-105 md:w-64 lg:w-96'
           />
         </div>
       ))}

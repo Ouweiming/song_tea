@@ -1,17 +1,18 @@
-import React, { useState } from 'react'
-import { useSpring, animated } from '@react-spring/web'
+import { animated, useSpring } from '@react-spring/web'
 import { FloatButton } from 'antd'
+import 'highlight.js/styles/github.css'
+import React, { useState } from 'react'
+
 import Block from './Block'
-import Introduction from './Introduction'
-import VideoSection from './Video'
-import 'highlight.js/styles/github.css' // 导入高亮样式
-import Header from './header'
-import Footer from './footer'
-import pig from './assets/pig.png'
-import { useTheme } from './theme-provider'
-import Photowall from './Photowall'
 import ContactForm from './Contact'
+import Introduction from './Introduction'
+import Photowall from './Photowall'
 import ShoppingCartList from './ShoppingCartList'
+import VideoSection from './Video'
+import pig from './assets/pig.png'
+import Footer from './footer'
+import Header from './header'
+import { useTheme } from './theme-provider'
 
 const Homepage = () => {
   const { theme } = useTheme()
@@ -22,46 +23,42 @@ const Homepage = () => {
 
     const toggleSidebar = () => {
       setIsSidebarOpen(!isSidebarOpen)
-      setIsFloatButtonRotated(!isFloatButtonRotated) // 旋转 FloatButton
+      setIsFloatButtonRotated(!isFloatButtonRotated)
     }
 
     return (
       <main className='container flex-auto'>
-        {/* 侧边栏图标 */}
-        <div onClick={toggleSidebar}>
+        <button onClick={toggleSidebar} className='focus:outline-none'>
           <FloatButton
-            className={`fixed top-1/2 transform-gpu transition-transform duration-500 ${isFloatButtonRotated ? 'rotate-180' : ''}`} // 使用 Tailwind CSS 类实现按钮旋转
+            className={`fixed top-1/2 transform-gpu transition-transform duration-500 ${isFloatButtonRotated ? 'rotate-180' : ''}`}
             icon={
               <div>
                 <img src={pig} alt='svg' />
               </div>
             }
           />
-        </div>
+        </button>
 
         <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
       </main>
     )
   }
 
-  {
-    /* 侧边栏 */
-  }
   const Sidebar = ({ isOpen }) => {
-    // 使用 react-spring 的 useSpring 钩子来定义侧边栏动画
     const sidebarAnimation = useSpring({
-      transform: isOpen ? 'translateX(0%)' : 'translateX(100%)', // 打开时从右侧平移进来，关闭时向右侧平移出去
-      opacity: isOpen ? 1 : 0, // 显示或隐藏侧边栏
-      config: { tension: 200, friction: 20 }, // 调整动画的张力和摩擦力
+      transform: isOpen ? 'translateX(0%)' : 'translateX(100%)',
+      opacity: isOpen ? 1 : 0,
+      config: { tension: 200, friction: 20 },
+      willChange: 'transform, opacity', // 添加 willChange 优化
     })
 
     return (
       <animated.aside
-        className='flex rounded-3xl fixed right-16 top-1/2 max-h-full bg-white bg-opacity-65 overflow-y-auto z-50'
+        className='fixed right-16 top-1/2 z-50 flex max-h-full overflow-y-auto rounded-3xl bg-white bg-opacity-65'
         style={sidebarAnimation}
       >
-        <div className='flex flex-col flex-wrap justify-center items-center h-full px-4 py-2'>
-          <p className='flex justify-center text-cyan-700 font-bold text-lg'>
+        <div className='flex h-full flex-col flex-wrap items-center justify-center px-4 py-2'>
+          <p className='flex justify-center text-lg font-bold text-cyan-700'>
             其余板块正在努力开发中~
           </p>
         </div>
@@ -74,10 +71,10 @@ const Homepage = () => {
       <FloatButton.BackTop />
       <div>
         <div
-          className={`flex flex-col min-h-screen ${theme === 'dark' ? 'bg-gradient-to-r from-customgradient2 to-customgradient_2' : 'bg-gradient-to-r from-customgradient1 to-customgradient_1'}`}
+          className={`flex min-h-screen flex-col ${theme === 'dark' ? 'bg-gradient-to-r from-customgradient2 to-customgradient_2' : 'bg-gradient-to-r from-customgradient1 to-customgradient_1'}`}
         >
           <Header />
-          <div className='relative flex flex-col flex-1'>
+          <div className='relative flex flex-1 flex-col'>
             <VideoSection />
           </div>
           <MainContent />

@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import React, { useState } from 'react'
 
 const Footer = () => {
   const [subscribed, setSubscribed] = useState(false)
@@ -26,16 +26,16 @@ const Footer = () => {
   }
 
   return (
-    <footer className='bg-white dark:bg-gray-800 text-dark dark:text-white py-8'>
+    <footer className='text-dark bg-white py-8 dark:bg-gray-800 dark:text-white'>
       <div className='container mx-auto px-4'>
         <div className='flex flex-wrap justify-between'>
-          <div className='w-full md:w-1/3 mb-8 md:mb-0'>
-            <h2 className='text-xl md:text-2xl font-bold mb-4'>联系信息</h2>
+          <div className='mb-8 w-full md:mb-0 md:w-1/3'>
+            <h2 className='mb-4 text-xl font-bold md:text-2xl'>联系信息</h2>
             <p>
               Email:{' '}
               <a
                 href='mailto:308683293@qq.com'
-                className='hover:underline hover:text-emerald-600'
+                className='hover:text-emerald-600 hover:underline'
               >
                 308683293@qq.com
               </a>
@@ -44,7 +44,7 @@ const Footer = () => {
           </div>
 
           <div className='w-full md:w-1/3'>
-            <h2 className='text-xl md:text-2xl font-bold mb-4'>订阅</h2>
+            <h2 className='mb-4 text-xl font-bold md:text-2xl'>订阅</h2>
             <form onSubmit={handleSubmit}>
               <div className='flex flex-col md:flex-row'>
                 <input
@@ -54,12 +54,12 @@ const Footer = () => {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder='您的电子邮件'
-                  className='w-full md:w-2/3 p-2 rounded-md mb-2 md:mb-0 mr-0 md:mr-2 dark:text-white text-black dark:bg-gray-700'
+                  className='mb-2 mr-0 w-full rounded-md p-2 text-black dark:bg-gray-700 dark:text-white md:mb-0 md:mr-2 md:w-2/3'
                   autoComplete='email'
                 />
                 <button
                   type='submit'
-                  className='w-full md:w-1/3 bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-md'
+                  className='w-full rounded-md bg-green-500 py-2 font-bold text-white hover:bg-green-600 md:w-1/3'
                 >
                   订阅
                 </button>
@@ -72,7 +72,7 @@ const Footer = () => {
         {/* 居中显示感谢订阅消息 */}
         <div className='mt-4 text-center'>
           {subscribed && (
-            <p className='text-green-500 text-2xl '>感谢您的信赖！</p>
+            <p className='text-2xl text-green-500'>感谢您的信赖！</p>
           )}
         </div>
 

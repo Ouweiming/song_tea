@@ -1,5 +1,6 @@
 // App.jsx 或其他父组件
 import React from 'react'
+
 import ShoppingCart from './ShoppingCart'
 import Product1 from './assets/goods1.jpg'
 import Product2 from './assets/goods2.jpg'
@@ -19,12 +20,12 @@ const ShoppingCartList = () => {
   return (
     <>
       <div className='mb-14'>
-        <div className='text-center m-14'>
-          <p className='text-emerald-500 dark:text-emerald-400 font-bold text-4xl'>
+        <div className='m-14 text-center'>
+          <p className='text-4xl font-bold text-emerald-500 dark:text-emerald-400'>
             产品展示:
           </p>
         </div>
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
           {products.map(product => (
             <ShoppingCart key={product.id} product={product} />
           ))}

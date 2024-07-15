@@ -1,5 +1,5 @@
-import React from 'react'
 import { motion } from 'framer-motion'
+import React from 'react'
 import { useInView } from 'react-intersection-observer'
 
 const AnimatedBlock = ({ delay = 0, direction = 'left', content }) => {
@@ -22,7 +22,7 @@ const AnimatedBlock = ({ delay = 0, direction = 'left', content }) => {
   }
 
   return (
-    <div ref={ref} className='py-8 flex justify-center items-center w-full'>
+    <div ref={ref} className='flex w-full items-center justify-center py-8'>
       <motion.div
         {...animationConfig}
         whileHover={{
@@ -33,13 +33,13 @@ const AnimatedBlock = ({ delay = 0, direction = 'left', content }) => {
             damping: 50,
           },
         }}
-        className='flex flex-col sm:flex-row items-center justify-center w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-5xl bg-white dark:bg-gray-300 bg-opacity-90 shadow-lg rounded-lg p-4 sm:p-6 md:p-8'
+        className='flex w-full max-w-xs flex-col items-center justify-center rounded-lg bg-white bg-opacity-90 p-4 shadow-lg dark:bg-gray-300 sm:max-w-sm sm:flex-row sm:p-6 md:max-w-md md:p-8 lg:max-w-lg xl:max-w-xl 2xl:max-w-5xl'
       >
         <div className='flex flex-col items-center justify-center overflow-hidden'>
-          <h2 className='text-emerald-500 dark:text-teal-600 text-xl sm:text-2xl md:text-3xl font-bold mb-4 text-start overflow-ellipsis whitespace-nowrap'>
+          <h2 className='mb-4 overflow-ellipsis whitespace-nowrap text-start text-xl font-bold text-emerald-500 dark:text-teal-600 sm:text-2xl md:text-3xl'>
             {content.title}
           </h2>
-          <p className='text-emerald-800 dark:text-emerald-900 text-center text-lg sm:text-xl md:text-2xl leading-relaxed overflow-auto'>
+          <p className='overflow-auto text-center text-lg leading-relaxed text-emerald-800 dark:text-emerald-900 sm:text-xl md:text-2xl'>
             {content.paragraph}
           </p>
         </div>
@@ -68,8 +68,8 @@ const Block = () => {
   }
 
   return (
-    <div className='flex gap-12 flex-col p-4 items-center justify-center min-h-screen py-24 bg-inherit dark:bg-inherit'>
-      <h1 className='text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 sm:mb-6 md:mb-8 text-emerald-800 dark:text-teal-500'>
+    <div className='flex min-h-screen flex-col items-center justify-center gap-12 bg-inherit p-4 py-24 dark:bg-inherit'>
+      <h1 className='mb-4 text-xl font-bold text-emerald-800 dark:text-teal-500 sm:mb-6 sm:text-2xl md:mb-8 md:text-3xl lg:text-4xl xl:text-5xl'>
         茶叶产品：
         <span className='text-green-600 dark:text-emerald-400'>
           岛屿记忆-后花园宋茶

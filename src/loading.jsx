@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
 import { Progress } from '@nextui-org/react'
+import { motion } from 'framer-motion'
+import React, { useEffect, useState } from 'react'
 
 export default function Loading() {
   const [value, setValue] = useState(0)
@@ -14,9 +14,9 @@ export default function Loading() {
   }, [])
 
   return (
-    <div className='flex flex-col items-center justify-center h-screen space-y-16 bg-gradient-to-br from-[#73F1CF] to-[#99CCDF]'>
+    <div className='flex h-screen flex-col items-center justify-center space-y-16 bg-gradient-to-br from-[#73F1CF] to-[#99CCDF]'>
       <motion.div
-        className='w-40 h-40 bg-white mb-20' // 添加了 mt-8 类来增加顶部间距
+        className='mb-20 h-40 w-40 bg-white' // 添加了 mt-8 类来增加顶部间距
         animate={{
           scale: [1, 2, 2, 1, 1],
           rotate: [0, 0, 180, 180, 0],
