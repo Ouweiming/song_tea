@@ -95,7 +95,7 @@ const Introduction = () => {
             className='text-3xl font-bold text-emerald-600 dark:text-emerald-400 md:text-4xl lg:text-5xl'
             {...animationConfigH1First}
           >
-            后花园村介绍&#x1F60D;
+            后花园村介绍
           </motion.h1>
           <motion.p
             ref={refPFirst}
