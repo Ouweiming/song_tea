@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
-import React from 'react'
 import { useInView } from 'react-intersection-observer'
+import PropTypes from 'prop-types'
 
 const AnimatedBlock = ({ delay = 0, direction = 'left', content }) => {
   const { ref, inView } = useInView({
@@ -46,6 +46,15 @@ const AnimatedBlock = ({ delay = 0, direction = 'left', content }) => {
       </motion.div>
     </div>
   )
+}
+
+AnimatedBlock.propTypes = {
+  delay: PropTypes.number,
+  direction: PropTypes.string,
+  content: PropTypes.shape({
+    title: PropTypes.string.isRequired,
+    paragraph: PropTypes.string.isRequired
+  }).isRequired
 }
 
 const Block = () => {

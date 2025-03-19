@@ -1,11 +1,21 @@
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import React, { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const Footer = () => {
   const [subscribed, setSubscribed] = useState(false)
   const [email, setEmail] = useState('')
   const [emailError, setEmailError] = useState('')
+  const timerRef = useRef(null)
+
+  // 在组件卸载时清除定时器
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    }
+  }, [])
 
   const handleSubmit = e => {
     e.preventDefault()
@@ -20,7 +30,11 @@ const Footer = () => {
     setEmail('')
     setEmailError('') // 清除错误消息
 
-    setTimeout(() => {
+    // 使用ref保存定时器ID以便清除
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+    }
+    timerRef.current = setTimeout(() => {
       setSubscribed(false)
     }, 3000)
   }
@@ -64,15 +78,21 @@ const Footer = () => {
                   订阅
                 </button>
               </div>
-              {emailError && <p className='text-red-500'>{emailError}</p>}
+              <div className='mt-1 h-6'>
+                {' '}
+                {/* 提供固定高度的容器 */}
+                {emailError && <p className='text-red-500'>{emailError}</p>}
+              </div>
             </form>
           </div>
         </div>
 
-        {/* 居中显示感谢订阅消息 */}
-        <div className='mt-4 text-center'>
+        {/* 居中显示感谢订阅消息，预留固定高度 */}
+        <div className='mt-4 h-10 text-center'>
+          {' '}
+          {/* 固定高度容器防止布局跳动 */}
           {subscribed && (
-            <p className='text-2xl text-green-500'>感谢您的信赖！</p>
+            <p className='text-2xl text-green-500'>感谢您的订阅！</p>
           )}
         </div>
 

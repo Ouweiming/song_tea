@@ -85,50 +85,73 @@ const Introduction = () => {
   }
 
   return (
-    <div className='container mx-auto px-14 py-28'>
+    <section id='village' className='container mx-auto px-6 py-20 md:py-28'>
       <div className='flex flex-col items-start gap-8 lg:flex-row'>
         <div className='flex-1 space-y-8 text-left'>
-          {' '}
-          {/* 添加 text-left 类 */}
-          <motion.h1
+          <motion.h2
             ref={refH1First}
             className='text-3xl font-bold text-emerald-600 dark:text-emerald-400 md:text-4xl lg:text-5xl'
             {...animationConfigH1First}
           >
             后花园村介绍
-          </motion.h1>
-          <motion.p
+          </motion.h2>
+          <motion.div
             ref={refPFirst}
-            className='text-justify text-lg text-gray-700 dark:text-gray-300 md:text-xl lg:text-2xl'
+            className='prose prose-lg max-w-none text-gray-700 dark:prose-invert dark:text-gray-300'
             {...animationConfigPFirst}
           >
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;后花园村坐落于南澳岛中部主峰果老山的北侧，下辖4个自然村，总人口约335人。它以两大产业为主：旅游业与茶产业，其中“宋茶”是后花园村的一大特色名片，可以说“村民即是茶农”。后花园村以其得天独厚的自然条件和深厚的文化底蕴，发展成为一个生态旅游村。村内山林覆盖率高达90%以上，空气中的氧离子含量丰富，被誉为天然“氧吧”。
-            同时，它优越的天然环境也为宋茶的生长提供了良好环境。
-          </motion.p>
+            <p className='leading-relaxed'>
+              后花园村位于南澳岛中部主峰果老山北侧，由4个自然村组成，总人口约335人。这里以旅游与茶产业为支柱，
+              <strong className='text-emerald-700 dark:text-emerald-400'>
+                宋茶
+              </strong>
+              作为村庄特色名片，深受游客喜爱。
+            </p>
+            <p className='leading-relaxed'>
+              环境得天独厚，山林覆盖率高达90%以上，空气负氧离子含量丰富，被誉为天然‘氧吧’。这样的自然环境为宋茶的生长提供了理想条件，使其具有独特的品质和口感。
+            </p>
+          </motion.div>
         </div>
       </div>
 
       <div className='mt-16 flex flex-col items-start gap-8 lg:flex-row'>
-        <div className='flex-1 space-y-8 text-right'>
-          {' '}
-          {/* 添加 text-right 类 */}
-          <motion.h1
+        <div className='flex-1 space-y-8'>
+          <motion.h2
             ref={refH1Second}
             className='text-3xl font-bold text-emerald-600 dark:text-emerald-400 md:text-4xl lg:text-5xl'
             {...animationConfigH1Second}
           >
             宋茶品牌理念
-          </motion.h1>
-          <motion.p
+          </motion.h2>
+          <motion.div
             ref={refPSecond}
-            className='text-justify text-lg text-gray-700 dark:text-gray-300 md:text-xl lg:text-2xl'
+            className='prose prose-lg max-w-none text-gray-700 dark:prose-invert dark:text-gray-300'
             {...animationConfigPSecond}
           >
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;“岛屿记忆”将健康与文化融合，带领人们踏上一段充满探索与品味的茶之旅。依托海岛自然与文化资源，展现创新茶文化，倡导人们追求身心平衡和内心的宁静。
-          </motion.p>
+            <p className='leading-relaxed'>
+              <span className='text-xl font-semibold text-emerald-600 dark:text-emerald-400'>
+                岛屿记忆
+              </span>
+              ——将健康与文化融为一体，带您踏上探索与品味的茶之旅。我们依托海岛的自然与文化资源，展现创新茶文化，倡导身心平衡和内心宁静的生活方式。
+            </p>
+            <div className='mt-4 flex flex-wrap gap-3'>
+              <span className='rounded-full bg-green-100 px-3 py-1 text-sm text-green-800 dark:bg-green-900 dark:text-green-100'>
+                天然有机
+              </span>
+              <span className='rounded-full bg-green-100 px-3 py-1 text-sm text-green-800 dark:bg-green-900 dark:text-green-100'>
+                传统工艺
+              </span>
+              <span className='rounded-full bg-green-100 px-3 py-1 text-sm text-green-800 dark:bg-green-900 dark:text-green-100'>
+                文化传承
+              </span>
+              <span className='rounded-full bg-green-100 px-3 py-1 text-sm text-green-800 dark:bg-green-900 dark:text-green-100'>
+                生态可持续
+              </span>
+            </div>
+          </motion.div>
         </div>
       </div>
-    </div>
+    </section>
   )
 }
 

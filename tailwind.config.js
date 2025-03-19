@@ -1,4 +1,6 @@
 import { nextui } from "@nextui-org/react";
+import tailwindForms from '@tailwindcss/forms';
+import tailwindTypography from '@tailwindcss/typography';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -14,14 +16,17 @@ export default {
         customgradient_1: 'rgb(142, 212, 202)',
         customgradient2: ' rgb(19, 78, 94)',
         customgradient_2: ' rgb(113, 178, 128)',
-       
+      },
+      boxShadow: {
+        large: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
       },
     },
   },
   darkMode: "class",
   plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'), // Add the typography plugin
+    tailwindForms,
+    tailwindTypography,
+    // line-clamp 功能现已内置到 Tailwind 核心中
     nextui()
   ],
 };

@@ -2,6 +2,7 @@ import * as React from 'react'
 import ReactDOM from 'react-dom/client'
 // 确保从 'react-dom/client' 导入
 import { BrowserRouter } from 'react-router-dom'
+import App from './App'
 
 import './index.css'
 

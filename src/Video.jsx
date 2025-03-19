@@ -1,18 +1,19 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import React, { Suspense, lazy, useEffect, useRef, useState } from 'react'
-// 添加 useEffect 导入
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { FiPlayCircle } from 'react-icons/fi'
 
+import LoadingSpinner from './LoadingSpinner'
+// 使用之前创建的加载组件
 import video_mp4 from './assets/video.mp4'
 import video_webm from './assets/video.webm'
 import video_1_mp4 from './assets/video_1.mp4'
 import video_1_webm from './assets/video_1.webm'
 import Heart from './heart'
 
-// 动态导入 ReactPlayer
+// 懒加载 ReactPlayer，减少初始加载体积
 const ReactPlayer = lazy(() => import('react-player'))
 
-// 新增的 Welcome 组件
+// Welcome 组件
 const Welcome = () => {
   return (
     <div className='p-18 mt-8 flex w-full flex-col items-center justify-center lg:p-48'>
@@ -30,8 +31,7 @@ const Welcome = () => {
             </span>
           </h1>
         </motion.div>
-        <Heart className='my-6' />{' '}
-        {/* 假设 Heart 组件可以接受 className 作为 prop */}
+        <Heart className='my-6' />
       </div>
     </div>
   )
@@ -39,64 +39,123 @@ const Welcome = () => {
 
 const VideoBackground = () => {
   const [showVideo, setShowVideo] = useState(false)
-  const [selectedVideo, setSelectedVideo] = useState('') // 添加 selectedVideo 状态
+  const [selectedVideo, setSelectedVideo] = useState('')
+  const [videoError, setVideoError] = useState(false)
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false) // 添加视频加载状态
   const videoContainerRef = useRef(null)
-
-  const handleButtonClick = () => {
-    setShowVideo(true)
-  }
-
-  const handleDeleteButtonClick = () => {
-    setShowVideo(false)
-  }
+  const backgroundVideoRef = useRef(null) // 添加背景视频引用
 
   const videoSources = [
     { src: video_mp4, type: 'video/mp4' },
     { src: video_webm, type: 'video/webm' },
-    // 添加其他格式的视频源
   ]
+
+  // 使用 useCallback 优化事件处理函数
+  const handleButtonClick = useCallback(() => {
+    setShowVideo(true)
+  }, [])
+
+  const handleDeleteButtonClick = useCallback(() => setShowVideo(false), [])
+
+  // 处理视频加载完成
+  const handleVideoReady = useCallback(() => {
+    setIsVideoLoaded(true)
+  }, [])
+
+  // 处理视频加载错误
+  const handleVideoError = useCallback(() => {
+    setVideoError(true)
+  }, [])
+
+  // 优化视频加载
+  const handleBackgroundVideoLoadedData = useCallback(() => {
+    if (backgroundVideoRef.current) {
+      // 视频已加载，可以设置播放速度
+      backgroundVideoRef.current.playbackRate = 0.8 // 稍微减慢播放速度
+    }
+  }, [])
 
   useEffect(() => {
     // 检测浏览器对视频格式的支持并选择视频源
-    const canPlayWebm = document
-      .createElement('video')
-      .canPlayType('video/webm; codecs="vp8, vorbis"')
-    if (canPlayWebm) {
+    const video = document.createElement('video')
+    const canPlayWebm = video.canPlayType('video/webm; codecs="vp8, vorbis"')
+
+    if (canPlayWebm !== '') {
       setSelectedVideo(video_1_webm)
     } else {
       setSelectedVideo(video_1_mp4)
     }
+
+    // 清理函数
+    return () => {
+      video.remove()
+    }
   }, [])
+
+  // 减少动画效果复杂度，提高性能
+  const buttonAnimationProps = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    whileHover: { scale: 1.05 },
+    whileTap: { scale: 0.95 },
+    transition: { type: 'spring', stiffness: 250, damping: 20 }, // 降低stiffness提高性能
+  }
 
   return (
     <>
       <Welcome />
       <div className='relative w-full overflow-hidden'>
-        <div
-          className='ml-20 mr-20 rounded-lg border-4 border-emerald-600 p-0 shadow-lg'
-          style={{ boxSizing: 'border-box' }}
-        >
+        <div className='mx-4 rounded-lg border-4 border-emerald-600 p-0 shadow-lg lg:mx-20'>
           <div className='relative w-full overflow-hidden'>
             <div className='relative h-0 pb-[60%] lg:pb-[52%]'>
-              <video
-                autoPlay
-                muted
-                loop
-                preload='auto'
-                alt='Background video'
-                className='absolute left-0 top-0 z-0 h-full w-full object-cover'
-                style={{ maxWidth: '100%' }}
-              >
-                {videoSources.map((source, index) => (
-                  <source key={index} src={source.src} type={source.type} />
-                ))}
-              </video>
+              {videoError ? (
+                <div className='absolute inset-0 flex items-center justify-center bg-black'>
+                  <p className='text-white'>视频加载失败</p>
+                </div>
+              ) : (
+                <>
+                  <video
+                    ref={backgroundVideoRef}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload='metadata' // 改为metadata以提升性能
+                    alt='Background video'
+                    className='absolute left-0 top-0 z-0 h-full w-full object-cover'
+                    style={{
+                      maxWidth: '100%',
+                      willChange: 'transform', // 提高动画性能
+                    }}
+                    onError={handleVideoError}
+                    onLoadedData={handleBackgroundVideoLoadedData}
+                    aria-hidden='true' // 背景视频不需要屏幕阅读器读取
+                  >
+                    {videoSources.map((source, index) => (
+                      <source key={index} src={source.src} type={source.type} />
+                    ))}
+                    您的浏览器不支持视频标签
+                  </video>
+
+                  {/* 整合新的响应式播放按钮 - 简化动画效果 */}
+                  <motion.button
+                    onClick={handleButtonClick}
+                    {...buttonAnimationProps}
+                    className='absolute bottom-4 right-4 flex items-center justify-center rounded-full border-2 border-green-300 bg-transparent px-3 py-3 text-base font-semibold text-yellow-500 shadow-lg hover:bg-emerald-600 dark:border-green-500 dark:text-yellow-500 sm:bottom-6 sm:right-6 sm:py-4 sm:text-lg md:bottom-8 md:right-8 md:py-5 md:text-xl'
+                    aria-label='播放完整视频'
+                  >
+                    <FiPlayCircle className='mr-2 text-3xl sm:text-3xl md:text-5xl' />
+                    <span className='hidden sm:inline'>播放完整视频</span>
+                    <span className='sm:hidden'>播放</span>
+                  </motion.button>
+                </>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* 点击后显示的视频容器 */}
+      {/* 点击后显示的视频容器 - 使用Portal优化性能 */}
       <AnimatePresence>
         {showVideo && (
           <motion.div
@@ -105,69 +164,70 @@ const VideoBackground = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90'
+            role='dialog'
+            aria-modal='true'
+            aria-labelledby='video-title'
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.5 }}
-              className='relative w-full max-w-3xl rounded-3xl bg-emerald-300 bg-opacity-80 p-3 dark:bg-emerald-700'
+              className='relative w-full max-w-4xl rounded-3xl bg-emerald-300 bg-opacity-80 p-3 dark:bg-emerald-700'
               ref={videoContainerRef}
             >
+              <h2 id='video-title' className='sr-only'>
+                宋茶宣传视频
+              </h2>
               <div className='relative h-0 w-full pb-[56.25%]'>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <ReactPlayer
-                    url={selectedVideo}
-                    playing={true}
-                    controls={true}
-                    loop={true}
-                    muted={true}
-                    width='100%'
-                    height='100%'
-                    className='absolute left-0 top-0 h-full w-full object-cover'
-                    ref={videoContainerRef}
-                  />
+                {/* 添加加载状态展示 */}
+                {!isVideoLoaded && (
+                  <div className='absolute left-0 top-0 flex h-full w-full items-center justify-center bg-black bg-opacity-50'>
+                    <LoadingSpinner size={60} color='#10b981' />
+                  </div>
+                )}
+                <Suspense
+                  fallback={
+                    <div className='absolute left-0 top-0 flex h-full w-full items-center justify-center'>
+                      <LoadingSpinner size={60} color='#10b981' />
+                    </div>
+                  }
+                >
+                  {selectedVideo && (
+                    <ReactPlayer
+                      url={selectedVideo}
+                      playing
+                      controls
+                      loop
+                      width='100%'
+                      height='100%'
+                      className='absolute left-0 top-0 h-full w-full object-cover'
+                      onReady={handleVideoReady}
+                      onError={handleVideoError}
+                      config={{
+                        file: {
+                          attributes: {
+                            controlsList: 'nodownload',
+                            preload: 'auto',
+                          },
+                        },
+                      }}
+                    />
+                  )}
                 </Suspense>
               </div>
 
               <button
                 onClick={handleDeleteButtonClick}
-                className='absolute right-3 top-3 rounded-full bg-gray-700 bg-opacity-20 px-4 py-2 text-white hover:bg-emerald-800 focus:outline-none'
+                className='absolute right-3 top-3 z-10 rounded-full bg-red-600 bg-opacity-80 px-4 py-2 text-white transition-colors hover:bg-red-700 focus:outline-none'
+                aria-label='关闭视频'
               >
-                X
+                关闭
               </button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* 播放按钮 - 移动端 */}
-      <div className='absolute inset-0 bottom-12 flex items-end justify-center md:hidden'>
-        <motion.button
-          onClick={handleButtonClick}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className='flex items-center rounded-full border-large border-green-300 bg-transparent px-6 py-3 font-semibold text-white shadow-lg hover:bg-emerald-600 dark:border-green-300 dark:text-white'
-        >
-          <FiPlayCircle className='mr-2' size={28} /> 播放完整视频
-        </motion.button>
-      </div>
-
-      {/* 播放按钮 - 非移动端，响应式设计调整为容器右下角 */}
-      <div className='absolute bottom-0 right-0 hidden items-center justify-center md:bottom-16 md:right-48 md:flex'>
-        <motion.button
-          onClick={handleButtonClick}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className='flex items-center rounded-full border-large border-green-300 bg-transparent px-6 py-3 text-2xl font-semibold text-white shadow-lg hover:bg-emerald-600 dark:border-green-500 dark:text-white dark:hover:text-sky-300'
-        >
-          <FiPlayCircle className='mr-2' size={36} /> 播放完整视频
-        </motion.button>
-      </div>
     </>
   )
 }

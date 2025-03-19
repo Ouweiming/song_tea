@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
+import PropTypes from 'prop-types'
 
 const initialState = {
   theme: 'system',
@@ -51,7 +52,6 @@ export function ThemeProvider({
     </ThemeProviderContext.Provider>
   )
 }
-
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext)
 
@@ -60,4 +60,10 @@ export const useTheme = () => {
   }
 
   return context
+}
+
+ThemeProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+  defaultTheme: PropTypes.string,
+  storageKey: PropTypes.string,
 }
