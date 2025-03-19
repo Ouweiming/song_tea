@@ -1,6 +1,11 @@
 import { motion } from 'framer-motion'
 import { useCallback } from 'react'
-
+import village1 from './assets/village1.jpg'
+import village2 from './assets/village2.jpg'
+import goods1 from './assets/goods1.jpg'
+import goods2 from './assets/goods2.jpg'
+import goods3 from './assets/goods3.jpg'
+import goods4 from './assets/goods4.jpg'
 import { useTheme } from './theme-provider'
 
 const TeaStorySection = () => {
@@ -28,7 +33,7 @@ const TeaStorySection = () => {
     if (productsSection) {
       // 获取导航栏高度，避免导航栏遮挡内容
       const headerHeight =
-        document.querySelector('[ref="headerRef"]')?.offsetHeight || 80
+        document.querySelector('[class*="header"]')?.offsetHeight || 80
       const elementPosition =
         productsSection.getBoundingClientRect().top + window.pageYOffset
       const offsetPosition = elementPosition - headerHeight
@@ -39,6 +44,30 @@ const TeaStorySection = () => {
       })
     }
   }, [])
+
+  // 茶品数据
+  const teaProducts = [
+    {
+      img: goods1,
+      title: '宋茶·墨玉',
+      desc: '高山云雾茶，滋味醇厚回甘',
+    },
+    {
+      img: goods2,
+      title: '宋茶·碧螺春',
+      desc: '香气清新持久，滋味鲜爽',
+    },
+    {
+      img: goods3,
+      title: '宋茶·红韵',
+      desc: '色泽红亮，香气高扬',
+    },
+    {
+      img: goods4,
+      title: '宋茶·白露',
+      desc: '口感清淡甘醇，回甘持久',
+    },
+  ]
 
   return (
     <section id='tea-story' className='overflow-hidden py-20'>
@@ -70,13 +99,13 @@ const TeaStorySection = () => {
                 茶，这种神奇的植物，在中国已有数千年的历史。相传神农尝百草时发现茶叶，从此茶便成为了中国人生活中不可或缺的一部分。唐代陆羽的《茶经》奠定了中国茶文化的基础，宋代时茶文化达到鼎盛，出现了斗茶、分茶等茶艺活动。
               </p>
               <p className='text-base leading-relaxed'>
-                茶文化传递的不仅是一种饮品，更是一种生活哲学。&apos;茶道&lsquo;代表着和、敬、清、寂的精神境界，告诉人们如何在平凡中寻找美好，在忙碌中保持宁静。
+                茶文化传递的不仅是一种饮品，更是一种生活哲学。茶道代表着和、敬、清、寂的精神境界，告诉人们如何在平凡中寻找美好，在忙碌中保持宁静。
               </p>
             </div>
             <div className='order-1 overflow-hidden rounded-lg shadow-xl dark:shadow-emerald-900/10 md:order-2'>
               <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800'>
                 <motion.img
-                  src='/src/assets/village1.jpg'
+                  src={village1}
                   alt='古代茶文化'
                   className='h-full w-full object-cover'
                   whileHover={{ scale: 1.05 }}
@@ -93,7 +122,7 @@ const TeaStorySection = () => {
             <div className='overflow-hidden rounded-lg shadow-xl dark:shadow-emerald-900/10'>
               <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800'>
                 <motion.img
-                  src='/src/assets/village2.jpg'
+                  src={village2}
                   alt='后花园村茶园'
                   className='h-full w-full object-cover'
                   whileHover={{ scale: 1.05 }}
@@ -130,7 +159,7 @@ const TeaStorySection = () => {
                 采摘
               </h4>
               <p className='leading-relaxed text-gray-700 dark:text-gray-300'>
-                遵循&apos;一芽一叶&apos;或&apos;一芽二叶&apos;的采摘标准，只在清晨采摘，保留茶叶最佳鲜度和营养成分。
+                遵循&quot;一芽一叶&quot;或&quot;一芽二叶&quot;的采摘标准，只在清晨采摘，保留茶叶最佳鲜度和营养成分。
               </p>
             </motion.div>
             <motion.div
@@ -166,28 +195,7 @@ const TeaStorySection = () => {
             精选宋茶
           </h3>
           <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-            {[
-              {
-                img: '/src/assets/goods1.jpg',
-                title: '宋茶·墨玉',
-                desc: '高山云雾茶，滋味醇厚回甘',
-              },
-              {
-                img: '/src/assets/goods2.jpg',
-                title: '宋茶·碧螺春',
-                desc: '香气清新持久，滋味鲜爽',
-              },
-              {
-                img: '/src/assets/goods3.jpg',
-                title: '宋茶·红韵',
-                desc: '色泽红亮，香气高扬',
-              },
-              {
-                img: '/src/assets/goods4.jpg',
-                title: '宋茶·白露',
-                desc: '口感清淡甘醇，回甘持久',
-              },
-            ].map((tea, index) => (
+            {teaProducts.map((tea, index) => (
               <motion.div
                 key={index}
                 className='overflow-hidden rounded-lg border border-gray-100 bg-white/90 shadow-lg dark:border-gray-700 dark:bg-gray-800/80'
@@ -226,7 +234,7 @@ const TeaStorySection = () => {
           </div>
           <div className='mt-10 text-center'>
             <motion.button
-              onClick={scrollToProducts} // 添加点击事件处理
+              onClick={scrollToProducts}
               className='rounded-full bg-emerald-600 px-8 py-3 font-medium text-white shadow-md transition-colors duration-300 hover:bg-emerald-700 hover:shadow-lg dark:bg-emerald-700 dark:hover:bg-emerald-600'
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
