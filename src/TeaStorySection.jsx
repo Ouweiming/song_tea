@@ -1,11 +1,14 @@
 import { motion } from 'framer-motion'
 import { useCallback } from 'react'
-import village1 from './assets/village1.jpg'
-import village2 from './assets/village2.jpg'
+
+// 导入优化的图片组件
 import goods1 from './assets/goods1.jpg'
 import goods2 from './assets/goods2.jpg'
 import goods3 from './assets/goods3.jpg'
 import goods4 from './assets/goods4.jpg'
+import village1 from './assets/village1.jpg'
+import village2 from './assets/village2.jpg'
+import OptimizedImage from './components/OptimizedImage'
 import { useTheme } from './theme-provider'
 
 const TeaStorySection = () => {
@@ -104,12 +107,15 @@ const TeaStorySection = () => {
             </div>
             <div className='order-1 overflow-hidden rounded-lg shadow-xl dark:shadow-emerald-900/10 md:order-2'>
               <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800'>
-                <motion.img
+                {/* 替换为优化的图片组件 */}
+                <OptimizedImage
                   src={village1}
                   alt='古代茶文化'
                   className='h-full w-full object-cover'
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.5 }}
+                  motionProps={{
+                    whileHover: { scale: 1.05 },
+                    transition: { duration: 0.5 },
+                  }}
                 />
               </div>
             </div>
@@ -121,12 +127,16 @@ const TeaStorySection = () => {
           <div className='grid items-center gap-8 md:grid-cols-2'>
             <div className='overflow-hidden rounded-lg shadow-xl dark:shadow-emerald-900/10'>
               <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800'>
-                <motion.img
+                {/* 替换为优化的图片组件 - 特别是这个大图片 */}
+                <OptimizedImage
                   src={village2}
                   alt='后花园村茶园'
                   className='h-full w-full object-cover'
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.5 }}
+                  motionProps={{
+                    whileHover: { scale: 1.05 },
+                    transition: { duration: 0.5 },
+                  }}
+                  sizes='(max-width: 768px) 100vw, 50vw'
                 />
               </div>
             </div>
@@ -213,12 +223,16 @@ const TeaStorySection = () => {
                 }}
               >
                 <div className='h-48 overflow-hidden bg-gray-100 dark:bg-gray-700'>
-                  <motion.img
+                  {/* 替换为优化的图片组件 */}
+                  <OptimizedImage
                     src={tea.img}
                     alt={tea.title}
                     className='h-full w-full object-cover'
-                    whileHover={{ scale: 1.1 }}
-                    transition={{ duration: 0.5 }}
+                    motionProps={{
+                      whileHover: { scale: 1.1 },
+                      transition: { duration: 0.5 },
+                    }}
+                    sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'
                   />
                 </div>
                 <div className='p-4'>
@@ -235,7 +249,7 @@ const TeaStorySection = () => {
           <div className='mt-10 text-center'>
             <motion.button
               onClick={scrollToProducts}
-              className='rounded-full bg-emerald-600 px-8 py-3 font-medium text-white shadow-md transition-colors duration-300 hover:bg-emerald-700 hover:shadow-lg dark:bg-emerald-700 dark:hover:bg-emerald-600'
+              className='rounded-full bg-emerald-800 px-8 py-3 font-medium text-white shadow-md transition-colors duration-300 hover:bg-emerald-900 hover:shadow-lg dark:bg-emerald-700 dark:hover:bg-emerald-600'
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

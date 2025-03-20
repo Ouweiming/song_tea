@@ -20,11 +20,17 @@ import {
   FiSun,
   FiUsers,
 } from 'react-icons/fi'
-import { useLocation, useNavigate } from 'react-router-dom'
 
 import Logo from './assets/logo.svg'
 import './index.css'
+// 使用我们自定义的hooks
+import { routerFutureConfig } from './router-config'
+import { useLocation, useNavigate } from './router-provider'
 import { useTheme } from './theme-provider'
+
+// 确保React Router知道future标志
+// eslint-disable-next-line no-unused-vars
+const routerConfig = routerFutureConfig
 
 // 分离并优化导航项组件
 const NavItem = memo(({ item, isActive, handleNavigation, theme }) => {
@@ -38,17 +44,18 @@ const NavItem = memo(({ item, isActive, handleNavigation, theme }) => {
         onClick={e => handleNavigation(item.href, e)}
         className={`relative px-4 py-2 text-sm font-medium tracking-wide transition-all duration-300 ${
           isActive(item.href)
-            ? `text-emerald-500 dark:text-emerald-300 font-semibold`
+            ? `font-semibold text-emerald-500 dark:text-emerald-300`
             : `${
-                theme === 'dark' 
-                  ? 'text-gray-100 dark:text-opacity-90' 
+                theme === 'dark'
+                  ? 'text-gray-100 dark:text-opacity-90'
                   : 'text-gray-700'
               }`
         }`}
         whileHover={{
           scale: 1.05,
           color: theme === 'dark' ? 'rgb(167, 243, 208)' : 'rgb(5, 150, 105)',
-          textShadow: theme === 'dark' ? '0 0 8px rgba(16, 185, 129, 0.3)' : 'none',
+          textShadow:
+            theme === 'dark' ? '0 0 8px rgba(16, 185, 129, 0.3)' : 'none',
         }}
         whileTap={{ scale: 0.95 }}
         onHoverStart={() => setIsHovered(true)}
@@ -549,7 +556,8 @@ const Header = () => {
                 e.preventDefault()
                 e.stopPropagation()
               }}
-              isSelected={isMenuOpen}
+              // 重命名属性为小写，避免React警告
+              isselected={isMenuOpen ? 'true' : 'false'}
             />
           </div>
 

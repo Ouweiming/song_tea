@@ -1,5 +1,5 @@
 import { motion, useAnimation } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { useInView } from 'react-intersection-observer'
 
 // 创建叶子形状的变体
@@ -14,13 +14,13 @@ const leafVariants = {
     opacity: 1,
     transition: {
       type: 'spring',
-      stiffness: 100,
-      damping: 15,
-      delay: 0.3,
+      stiffness: 70, // 降低刚度值
+      damping: 10,
+      delay: 0.2,
       repeat: Infinity,
       repeatType: 'reverse',
-      repeatDelay: 1.2,
-      duration: 1.5, // 减少动画时间以节省性能
+      repeatDelay: 2, // 增加延迟，减少动画频率
+      duration: 1, // 减少动画时间以节省性能
     },
   },
   paused: {
@@ -29,8 +29,9 @@ const leafVariants = {
   },
 }
 
-export default function Heart() {
-  const [size, setSize] = useState(150)
+// 使用memo优化组件
+const Heart = memo(() => {
+  const [size, setSize] = useState(120) // 默认尺寸小一些
   const controls = useAnimation()
   const [ref, inView] = useInView({
     triggerOnce: false,
@@ -58,15 +59,15 @@ export default function Heart() {
       resizeTimeout = setTimeout(() => {
         // 更加精细的响应式大小调整
         if (window.innerWidth < 640) {
-          setSize(80)
+          setSize(70)
         } else if (window.innerWidth < 768) {
-          setSize(100)
+          setSize(80)
         } else if (window.innerWidth < 1024) {
-          setSize(120)
+          setSize(100)
         } else {
-          setSize(150)
+          setSize(120)
         }
-      }, 100) // 100ms防抖延迟
+      }, 200) // 增加防抖延迟
     }
 
     window.addEventListener('resize', handleResize)
@@ -81,7 +82,7 @@ export default function Heart() {
   }, [])
 
   return (
-    <div className='flex items-center justify-center py-4' ref={ref}>
+    <div className='flex items-center justify-center py-2' ref={ref}>
       <motion.svg
         width={size}
         height={size}
@@ -89,15 +90,18 @@ export default function Heart() {
         initial='hidden'
         animate={controls}
         className='drop-shadow-md filter'
-        style={{ willChange: 'transform, opacity' }} // 添加will-change优化性能
-        aria-hidden='true' // 添加无障碍属性，表示这是装饰性元素
+        style={{ 
+          willChange: 'transform, opacity',
+          contain: 'strict', // 优化渲染
+          contentVisibility: 'auto'
+        }}
+        aria-hidden='true'
       >
         <linearGradient
           id='teaLeafGradient'
           x1='0%'
           y1='0%'
           x2='100%'
-          y2='100%'
         >
           <stop offset='0%' stopColor='#4ade80' />
           <stop offset='100%' stopColor='#10b981' />
@@ -110,4 +114,7 @@ export default function Heart() {
       </motion.svg>
     </div>
   )
-}
+})
+
+Heart.displayName = 'Heart'
+export default Heart

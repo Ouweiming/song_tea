@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import PropTypes from 'prop-types'
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { FiPlayCircle } from 'react-icons/fi'
 
@@ -10,33 +11,76 @@ import video_1_mp4 from './assets/video_1.mp4'
 import video_1_webm from './assets/video_1.webm'
 import Heart from './heart'
 
-// 懒加载 ReactPlayer，减少初始加载体积
-const ReactPlayer = lazy(() => import('react-player'))
+// 仅在需要时动态导入ReactPlayer
+const VideoPlayer = ({ url, onReady, onError }) => {
+  const PlayerComponent = lazy(() => import('react-player'))
 
-// Welcome 组件
-const Welcome = () => {
   return (
-    <div className='p-18 mt-8 flex w-full flex-col items-center justify-center lg:p-48'>
+    <Suspense fallback={<LoadingSpinner size={60} color='#10b981' />}>
+      <PlayerComponent
+        url={url}
+        playing
+        controls
+        onReady={onReady}
+        onError={onError}
+      />
+    </Suspense>
+  )
+}
+
+// 添加PropTypes验证
+VideoPlayer.propTypes = {
+  url: PropTypes.string.isRequired,
+  onReady: PropTypes.func,
+  onError: PropTypes.func,
+}
+
+// Welcome 组件 - 优化关键渲染路径
+const Welcome = () => {
+  // 简化动画效果，提高性能
+  const titleAnimationProps = {
+    initial: { opacity: 0, y: -20 }, // 减小y轴位移以提高渲染性能
+    animate: { opacity: 1, y: 0 },
+    transition: {
+      ease: 'easeOut',
+      duration: 0.6, // 减少动画时间
+      delay: 0.1, // 添加很小的延迟以便关键元素优先渲染
+    },
+  }
+
+  return (
+    <div className='mt-4 flex w-full flex-col items-center justify-center p-6 lg:p-24'>
       <div className='text-center'>
         <motion.div
           className='flex flex-col items-center justify-center'
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ease: 'easeOut', duration: 1 }}
+          {...titleAnimationProps}
+          style={{
+            willChange: 'opacity, transform', // 提示浏览器预先做好变换准备
+            contentVisibility: 'auto', // 通知浏览器这是重要内容
+          }}
         >
-          <h1 className='mb-12 bg-clip-text text-3xl font-bold text-emerald-400 md:text-4xl lg:text-7xl'>
+          <h1 className='mb-8 bg-clip-text text-3xl font-bold text-emerald-400 md:text-4xl lg:text-6xl'>
             欢迎来到
-            <span className='ml-4 inline-block rounded-xl border border-green-700 bg-customgradient_1 px-4 py-2 font-semibold text-emerald-700 shadow-large'>
+            {/* 优化 LCP 元素 - 关键性能点 */}
+            <span
+              className='ml-4 inline-block rounded-xl border border-green-700 bg-customgradient_1 px-4 py-2 font-semibold text-emerald-700 shadow-lg'
+              style={{
+                contain: 'paint', // 包含绘制操作
+                contentVisibility: 'auto',
+                containIntrinsicSize: 'auto', // 帮助浏览器计算尺寸
+              }}
+            >
               后花园庄
             </span>
           </h1>
         </motion.div>
-        <Heart className='my-6' />
+        <Heart className='my-4' />
       </div>
     </div>
   )
 }
 
+// 优化VideoBackground组件
 const VideoBackground = () => {
   const [showVideo, setShowVideo] = useState(false)
   const [selectedVideo, setSelectedVideo] = useState('')
@@ -80,11 +124,14 @@ const VideoBackground = () => {
     const video = document.createElement('video')
     const canPlayWebm = video.canPlayType('video/webm; codecs="vp8, vorbis"')
 
-    if (canPlayWebm !== '') {
-      setSelectedVideo(video_1_webm)
-    } else {
-      setSelectedVideo(video_1_mp4)
-    }
+    // 使用Promise确保处理完成
+    Promise.resolve().then(() => {
+      if (canPlayWebm !== '') {
+        setSelectedVideo(video_1_webm)
+      } else {
+        setSelectedVideo(video_1_mp4)
+      }
+    })
 
     // 清理函数
     return () => {
@@ -194,24 +241,10 @@ const VideoBackground = () => {
                   }
                 >
                   {selectedVideo && (
-                    <ReactPlayer
+                    <VideoPlayer
                       url={selectedVideo}
-                      playing
-                      controls
-                      loop
-                      width='100%'
-                      height='100%'
-                      className='absolute left-0 top-0 h-full w-full object-cover'
                       onReady={handleVideoReady}
                       onError={handleVideoError}
-                      config={{
-                        file: {
-                          attributes: {
-                            controlsList: 'nodownload',
-                            preload: 'auto',
-                          },
-                        },
-                      }}
                     />
                   )}
                 </Suspense>

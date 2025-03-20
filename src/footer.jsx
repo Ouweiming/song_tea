@@ -73,7 +73,7 @@ const Footer = () => {
                 />
                 <button
                   type='submit'
-                  className='w-full rounded-md bg-green-500 py-2 font-bold text-white hover:bg-green-600 md:w-1/3'
+                  className='w-full rounded-md bg-green-700 py-2 font-bold text-white hover:bg-green-800 md:w-1/3'
                 >
                   订阅
                 </button>

@@ -2,15 +2,23 @@ import { Tooltip } from '@nextui-org/react'
 import PropTypes from 'prop-types'
 import { FaShoppingCart } from 'react-icons/fa'
 
+// 导入优化的图片组件
+import OptimizedImage from './components/OptimizedImage'
+
 const ShoppingCart = ({ product }) => {
   return (
     <div className='mx-auto max-w-lg overflow-hidden rounded-lg bg-white shadow-lg transition-transform duration-300 hover:-translate-y-1 dark:bg-teal-800'>
       <div className='p-6'>
         <div className='mb-4 flex items-center justify-center'>
-          <img
-            className='h-64 w-64 rounded-full object-cover shadow-lg transition-transform duration-200 hover:scale-105'
+          {/* 替换为优化的图片组件 */}
+          <OptimizedImage
             src={product.image}
             alt={product.name}
+            className='h-64 w-64 rounded-full object-cover shadow-lg transition-transform duration-200 hover:scale-105'
+            width={256}
+            height={256}
+            sizes='256px'
+            priority={true} // 产品图片优先加载
           />
         </div>
         <div className='text-center'>
