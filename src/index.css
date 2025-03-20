@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 添加在文件顶部或适当位置 */
+
+/* 主题切换保护样式 */
+:root[data-theme-switching='true'] * {
+  transition: none !important;
+}
+
+/* 文本颜色保护 - 确保明确设置优先级高的颜色规则 */
+.dark .text-emerald-300,
+.dark .text-emerald-400,
+.dark .text-emerald-500 {
+  color: var(--emerald-300, rgb(110, 231, 183)) !important;
+}
+
+.dark .text-emerald-600,
+.dark .text-emerald-700 {
+  color: var(--emerald-400, rgb(52, 211, 153)) !important;
+}
+
+/* 亮色模式保护 */
+:root:not(.dark) .text-emerald-600,
+:root:not(.dark) .text-emerald-700 {
+  color: var(--emerald-700, rgb(4, 120, 87)) !important;
+}
+
+:root:not(.dark) .text-emerald-500,
+:root:not(.dark) .text-emerald-400 {
+  color: var(--emerald-500, rgb(16, 185, 129)) !important;
+}
+
+/* 定义CSS变量作为颜色备份机制 */
+:root {
+  --emerald-300: rgb(110, 231, 183);
+  --emerald-400: rgb(52, 211, 153);
+  --emerald-500: rgb(16, 185, 129);
+  --emerald-600: rgb(5, 150, 105);
+  --emerald-700: rgb(4, 120, 87);
+}
+
 /* 在你的全局 CSS 文件中（例如 index.css 或者 custom.css） */
 .prose-dark {
   --tw-prose-body: #d1d5db;

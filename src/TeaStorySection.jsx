@@ -9,7 +9,7 @@ import goods4 from './assets/goods4.jpg'
 import village1 from './assets/village1.jpg'
 import village2 from './assets/village2.jpg'
 import OptimizedImage from './components/OptimizedImage'
-import { useTheme } from './theme-provider'
+import { useTheme } from './useTheme'
 
 const TeaStorySection = () => {
   const { theme } = useTheme()

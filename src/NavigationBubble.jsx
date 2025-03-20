@@ -12,7 +12,7 @@ import {
 // 使用我们自定义的hooks
 import { routerFutureConfig } from './router-config'
 import { useLocation, useNavigate } from './router-provider'
-import { useTheme } from './theme-provider'
+import { useTheme } from './useTheme'
 
 // 确保React Router知道future标志
 // eslint-disable-next-line no-unused-vars

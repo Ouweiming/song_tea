@@ -129,14 +129,18 @@ export default defineConfig({
         // 为代码分割的块创建单独的文件
         chunkFileNames: 'assets/js/[name]-[hash].js',
         manualChunks: {
-          // UI框架相关
+          // 修改块配置:
+          // 1. 将React放入框架块，确保它先加载
+          'vendor-framework': ['react', 'react-dom', 'react/jsx-runtime'],
+          
+          // 2. 确保framer-motion和其他动画库可以访问React
           'vendor-ui': ['@nextui-org/react', '@nextui-org/theme'],
-          // 动画相关
-          'vendor-animation': ['framer-motion', 'gsap', '@gsap/react', '@react-spring/web'],
-          // 工具库
-          'vendor-utils': ['react-router-dom', 'react-intersection-observer'],
-          // React基础库
-          'vendor-react': ['react', 'react-dom']
+          
+          // 3. 移除动画独立分块，或确保其包含React依赖
+          // 'vendor-animation': ['framer-motion', 'gsap', '@gsap/react', '@react-spring/web'],
+          
+          // 4. 其他工具库保持不变
+          'vendor-utils': ['react-router-dom', 'react-intersection-observer']
         }
       }
     }

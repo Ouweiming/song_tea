@@ -1,18 +1,26 @@
 import { FloatButton } from 'antd'
 import { AnimatePresence, motion } from 'framer-motion'
 import 'highlight.js/styles/github.css'
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { FiArrowUp } from 'react-icons/fi'
 
-// import Block from './Block'
-import LoadingSpinner from './LoadingSpinner'
-import NavigationBubble from './NavigationBubble'
+// import NavigationBubble from './NavigationBubble'
 import VideoSection from './Video'
 import Header from './header'
-import { useTheme } from './theme-provider'
+import { useTheme } from './useTheme'
 
-// 懒加载非首屏组件
-const Introduction = lazy(() => import('./Introduction'))
+// 使用动态导入优化懒加载
+const Introduction = lazy(() => {
+  // 减少闪烁
+  return new Promise(resolve => {
+    // 预加载延迟以优化页面加载体验
+    import('./Introduction').then(module => {
+      setTimeout(() => resolve(module), 100)
+    })
+  })
+})
+
+// 其他组件使用类似的加载策略
 const TeaStorySection = lazy(() => import('./TeaStorySection'))
 const Photowall = lazy(() => import('./Photowall'))
 const ShoppingCartList = lazy(() => import('./ShoppingCartList'))
@@ -22,37 +30,44 @@ const Footer = lazy(() => import('./footer'))
 export default function Homepage() {
   const { theme } = useTheme()
   const [scrollPosition, setScrollPosition] = useState(0)
+  const isFirstRender = useRef(true)
 
-  // 监听滚动位置
+  // 监听滚动位置，但使用节流减少更新频率
   useEffect(() => {
+    let lastUpdate = 0
     const handleScroll = () => {
-      setScrollPosition(window.scrollY)
+      const now = Date.now()
+      if (now - lastUpdate > 100) {
+        // 100ms节流
+        lastUpdate = now
+        setScrollPosition(window.scrollY)
+      }
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // 标记页面已经初次渲染完成
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+    }
+  }, [])
+
   // 计算返回顶部按钮的透明度
   const backTopOpacity = scrollPosition > 300 ? 1 : 0
 
-  // 简化后的MainContent组件 - 已移除侧边栏相关代码
-  const MainContent = () => {
-    return (
-      <main className='container flex-auto'>{/* 侧边栏相关代码已移除 */}</main>
-    )
-  }
-
-  // 页面过渡动画
+  // 简化页面过渡动画
   const pageVariants = {
     initial: { opacity: 0 },
     enter: {
       opacity: 1,
-      transition: { duration: 0.5, ease: 'easeInOut' },
+      transition: { duration: 0.3, ease: 'easeOut' },
     },
     exit: {
       opacity: 0,
-      transition: { duration: 0.5, ease: 'easeInOut' },
+      transition: { duration: 0.2, ease: 'easeIn' },
     },
   }
 
@@ -64,11 +79,12 @@ export default function Homepage() {
         exit='exit'
         variants={pageVariants}
       >
-        {/* 返回顶部按钮 - 添加浮动动画 */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: backTopOpacity }}
-          transition={{ duration: 0.3 }}
+        {/* 返回顶部按钮 - 使用CSS而不是动画来控制显示/隐藏 */}
+        <div
+          style={{
+            opacity: backTopOpacity,
+            transition: 'opacity 0.3s ease',
+          }}
         >
           <FloatButton.BackTop
             visibilityHeight={300}
@@ -97,7 +113,7 @@ export default function Homepage() {
                   y: [0, -5, 0],
                   transition: {
                     repeat: Infinity,
-                    duration: 1.5,
+                    duration: 2, // 减少动画频率
                     repeatType: 'loop',
                   },
                 }}
@@ -107,7 +123,7 @@ export default function Homepage() {
             }
             className='hover:shadow-lg'
           />
-        </motion.div>
+        </div>
 
         <div>
           <div
@@ -118,16 +134,33 @@ export default function Homepage() {
               <div className='relative flex flex-1 flex-col'>
                 <VideoSection />
               </div>
-              <MainContent />
-              <Suspense fallback={<LoadingSpinner size={60} />}>
+
+              {/* 使用优化的Suspense方式懒加载组件 */}
+              <Suspense fallback={<div className='h-screen' />}>
                 <Introduction />
+              </Suspense>
+
+              <Suspense fallback={<div className='h-screen' />}>
                 <TeaStorySection />
+              </Suspense>
+
+              <Suspense fallback={<div className='h-screen' />}>
                 <Photowall />
+              </Suspense>
+
+              <Suspense fallback={<div className='h-screen' />}>
                 <ShoppingCartList />
+              </Suspense>
+
+              <Suspense fallback={<div className='h-screen' />}>
                 <ContactForm />
+              </Suspense>
+
+              <Suspense fallback={<div className='h-96' />}>
                 <Footer />
               </Suspense>
-              <NavigationBubble />
+
+              {/* <NavigationBubble /> */}
             </div>
           </div>
         </div>

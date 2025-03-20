@@ -1,8 +1,11 @@
 import * as React from 'react'
 import ReactDOM from 'react-dom/client'
 
+// 确保React先加载
+
 import App from './App'
 import './index.css'
+import './preload'
 
 // 预加载关键资源
 const preloadResources = () => {

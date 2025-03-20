@@ -60,26 +60,26 @@ const Introduction = () => {
 
   // 第一个组件的动画配置（从左上角进入）
   const animationConfigH1First = {
-    initial: { opacity: 0, x: -30, y: -100 },
+    initial: { opacity: 0, x: -20, y: -100 },
     animate: controlsH1First,
     transition: { duration: 0.8, ease: 'easeOut' },
   }
 
   const animationConfigPFirst = {
-    initial: { opacity: 0, x: -30, y: -100 },
+    initial: { opacity: 0, x: -20, y: -100 },
     animate: controlsPFirst,
     transition: { duration: 0.9, ease: 'easeOut' },
   }
 
   // 第二个组件的动画配置（从右上角进入）
   const animationConfigH1Second = {
-    initial: { opacity: 0, x: 30, y: -100 },
+    initial: { opacity: 0, x: 20, y: -100 },
     animate: controlsH1Second,
     transition: { duration: 0.7, ease: 'easeOut' },
   }
 
   const animationConfigPSecond = {
-    initial: { opacity: 0, x: 30, y: -100 },
+    initial: { opacity: 0, x: 20, y: -100 },
     animate: controlsPSecond,
     transition: { duration: 0.8, ease: 'easeOut' },
   }
