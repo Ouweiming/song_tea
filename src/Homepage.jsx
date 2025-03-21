@@ -22,7 +22,6 @@ const Introduction = lazy(() => {
 
 // 其他组件使用类似的加载策略
 const TeaStorySection = lazy(() => import('./TeaStorySection'))
-const Photowall = lazy(() => import('./Photowall'))
 const ShoppingCartList = lazy(() => import('./ShoppingCartList'))
 const ContactForm = lazy(() => import('./Contact'))
 const Footer = lazy(() => import('./footer'))
@@ -127,7 +126,11 @@ export default function Homepage() {
 
         <div>
           <div
-            className={`flex min-h-screen flex-col ${theme === 'dark' ? 'bg-gradient-to-r from-customgradient2 to-customgradient_2' : 'bg-gradient-to-r from-customgradient1 to-customgradient_1'}`}
+            className={`flex min-h-screen flex-col ${
+              theme === 'dark'
+                ? 'bg-gradient-to-r from-[rgb(15,65,80)] to-[rgb(95,160,110)]'
+                : 'bg-gradient-to-r from-[rgb(246,242,233)] to-[rgb(142,212,202)]'
+            }`}
           >
             <Header />
             <div className='pt-20'>
@@ -142,10 +145,6 @@ export default function Homepage() {
 
               <Suspense fallback={<div className='h-screen' />}>
                 <TeaStorySection />
-              </Suspense>
-
-              <Suspense fallback={<div className='h-screen' />}>
-                <Photowall />
               </Suspense>
 
               <Suspense fallback={<div className='h-screen' />}>

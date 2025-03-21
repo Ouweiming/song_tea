@@ -8,7 +8,13 @@ import {
   NavbarMenuToggle,
   Navbar as NextUINavbar,
 } from '@nextui-org/react'
-import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
+import {
+  motion,
+  useInView,
+  useScroll,
+  useSpring,
+  useTransform,
+} from 'framer-motion'
 import PropTypes from 'prop-types'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -32,6 +38,151 @@ import { useTheme } from './useTheme'
 // eslint-disable-next-line no-unused-vars
 const routerConfig = routerFutureConfig
 
+// 新增: 渐变填充文字动画组件
+const AnimatedGradientText = memo(({ text, subText, theme, onNavigate }) => {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: false, threshold: 0.5 })
+  const [animationKey, setAnimationKey] = useState(0)
+
+  // 当组件进入视图时重置动画
+  useEffect(() => {
+    if (isInView) {
+      setAnimationKey(prev => prev + 1)
+    }
+  }, [isInView])
+
+  // 主标题字符动画配置
+  const letterVariants = {
+    hidden: {
+      opacity: 0.3,
+      y: 15,
+      scale: 0.9,
+    },
+    visible: i => ({
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        delay: i * 0.05,
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    }),
+  }
+
+  // 副标题动画配置
+  const subTextVariants = {
+    hidden: {
+      opacity: 0,
+      y: 10,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: text.length * 0.05 + 0.1,
+        duration: 0.5,
+        ease: 'easeOut',
+      },
+    },
+  }
+
+  // 装饰线动画配置
+  const decorLine = {
+    hidden: {
+      scaleX: 0,
+      opacity: 0,
+    },
+    visible: {
+      scaleX: 1,
+      opacity: 1,
+      transition: {
+        delay: text.length * 0.05 + 0.2,
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      className='flex cursor-pointer flex-col justify-center'
+      onClick={onNavigate}
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <div className='overflow-hidden'>
+        {/* 主标题文字，字符单独动画 */}
+        <motion.p
+          key={`main-text-${animationKey}`}
+          className={`m-0 text-2xl font-bold leading-tight ${
+            theme === 'dark'
+              ? 'bg-gradient-to-r from-gray-300 via-emerald-300 to-gray-300'
+              : 'bg-gradient-to-r from-gray-700 via-emerald-600 to-gray-700'
+          } bg-clip-text text-transparent`}
+          style={{
+            backgroundSize: '300% 100%',
+            willChange: 'transform',
+          }}
+        >
+          {Array.from(text).map((char, i) => (
+            <motion.span
+              key={`${char}-${i}`}
+              custom={i}
+              variants={letterVariants}
+              initial='hidden'
+              animate={isInView ? 'visible' : 'hidden'}
+              style={{
+                display: 'inline-block',
+                willChange: 'transform, opacity',
+              }}
+            >
+              {char}
+            </motion.span>
+          ))}
+        </motion.p>
+      </div>
+
+      {/* 装饰线 */}
+      <motion.div
+        key={`decor-line-${animationKey}`}
+        className={`h-0.5 w-full ${
+          theme === 'dark'
+            ? 'bg-gradient-to-r from-transparent via-emerald-300 to-transparent'
+            : 'bg-gradient-to-r from-transparent via-emerald-600 to-transparent'
+        }`}
+        variants={decorLine}
+        initial='hidden'
+        animate={isInView ? 'visible' : 'hidden'}
+        style={{ willChange: 'transform, opacity' }}
+      />
+
+      {/* 副标题文字 */}
+      <motion.p
+        key={`sub-text-${animationKey}`}
+        className={`m-0 text-sm ${
+          theme === 'dark' ? 'text-emerald-300/90' : 'text-emerald-600/90'
+        }`}
+        variants={subTextVariants}
+        initial='hidden'
+        animate={isInView ? 'visible' : 'hidden'}
+        style={{ willChange: 'transform, opacity' }}
+      >
+        {subText}
+      </motion.p>
+    </motion.div>
+  )
+})
+
+AnimatedGradientText.displayName = 'AnimatedGradientText'
+AnimatedGradientText.propTypes = {
+  text: PropTypes.string.isRequired,
+  subText: PropTypes.string.isRequired,
+  theme: PropTypes.string.isRequired,
+  onNavigate: PropTypes.func.isRequired,
+}
+
 // 分离并优化导航项组件
 const NavItem = memo(
   ({ item, isActive, handleNavigation, theme, isNavigating }) => {
@@ -47,11 +198,11 @@ const NavItem = memo(
           onClick={e => handleNavigation(item.href, e)}
           className={`relative px-1 py-2 text-sm font-medium tracking-wide transition-all duration-300 sm:px-2 md:px-3 lg:px-4 ${
             isActive(item.href)
-              ? 'font-semibold text-emerald-500 dark:text-emerald-300'
+              ? 'font-semibold text-emerald-600 dark:text-emerald-300'
               : theme === 'dark'
                 ? 'text-gray-100'
-                : 'text-gray-700'
-          }`}
+                : 'text-gray-900'
+          }`} // 移除 text-on-transparent 类
           whileHover={{
             scale: 1.05,
             color: theme === 'dark' ? 'rgb(167, 243, 208)' : 'rgb(5, 150, 105)',
@@ -71,7 +222,7 @@ const NavItem = memo(
               className={`absolute bottom-0 left-0 h-0.5 w-full ${
                 theme === 'dark'
                   ? 'bg-gradient-to-r from-emerald-400 to-emerald-300'
-                  : 'bg-emerald-500'
+                  : 'bg-gradient-to-r from-emerald-600 to-emerald-500'
               }`}
               layoutId={`activeIndicator-${item.href.replace('#', '')}`}
               // 设置更高的过渡动画优先级，防止被滚动检测中断
@@ -98,9 +249,9 @@ const NavItem = memo(
               }}
               style={{
                 background: `linear-gradient(90deg, 
-                ${theme === 'dark' ? '#34D399' : '#34D399'} 0%, 
-                ${theme === 'dark' ? '#A7F3D0' : '#059669'} 50%, 
-                ${theme === 'dark' ? '#34D399' : '#34D399'} 100%)`,
+                ${theme === 'dark' ? '#34D399' : '#059669'} 0%, 
+                ${theme === 'dark' ? '#A7F3D0' : '#10B981'} 50%, 
+                ${theme === 'dark' ? '#34D399' : '#059669'} 100%)`,
                 transformOrigin: 'left',
                 willChange: 'transform',
               }}
@@ -176,76 +327,39 @@ MenuItem.propTypes = {
   index: PropTypes.number.isRequired,
 }
 
-// 为主题切换按钮也添加悬浮加载动画
+// 简化主题切换按钮，解决卡顿问题
 const ThemeToggleButton = memo(({ theme, handleToggle }) => {
-  const [isHovered, setIsHovered] = useState(false)
-
   return (
-    <div className='relative'>
-      <Button
-        isIconOnly
-        variant='light'
-        color='success'
-        className='rounded-full p-2 transition-all duration-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
-        onPress={handleToggle}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        aria-label={theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'}
+    <Button
+      isIconOnly
+      variant='light'
+      color='success'
+      aria-label={theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'}
+      className='rounded-full p-2 transition-all duration-200 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
+      onPress={() => {
+        // 直接调用切换逻辑，移除额外检查
+        handleToggle()
+      }}
+    >
+      <motion.div
+        initial={false}
+        animate={{ rotate: theme === 'dark' ? 180 : 0 }}
+        transition={{
+          duration: 0.3, // 减少动画时长
+          type: 'spring',
+          stiffness: 150,
+          damping: 15,
+        }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
-        <motion.div
-          initial={false}
-          animate={{ rotate: theme === 'dark' ? 180 : 0 }}
-          transition={{
-            duration: 0.5,
-            type: 'spring',
-            stiffness: 180,
-            damping: 15,
-          }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className='flex items-center justify-center'
-        >
-          {theme === 'dark' ? (
-            <FiSun className='text-emerald-300' size={24} />
-          ) : (
-            <FiMoon className='text-emerald-700' size={24} />
-          )}
-        </motion.div>
-      </Button>
-
-      {/* 悬浮时的环形加载动画 - 使用will-change优化性能 */}
-      {isHovered && (
-        <motion.div
-          className='absolute -inset-1 rounded-full'
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: 1,
-            boxShadow: `0 0 10px 2px ${theme === 'dark' ? 'rgba(110, 231, 183, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
-          }}
-          transition={{ duration: 0.3 }}
-          style={{
-            willChange: 'opacity, box-shadow', // 提示浏览器优化性能
-          }}
-          // 避免无障碍工具读取装饰性元素
-          aria-hidden='true'
-        >
-          <motion.div
-            className='absolute inset-0 rounded-full'
-            initial={{ borderWidth: '0px' }}
-            animate={{
-              borderWidth: '2px',
-              borderColor:
-                theme === 'dark'
-                  ? 'rgba(110, 231, 183, 0.5)'
-                  : 'rgba(16, 185, 129, 0.5)',
-              borderStyle: 'solid',
-            }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          />
-        </motion.div>
-      )}
-    </div>
+        {theme === 'dark' ? (
+          <FiSun className='text-emerald-300' size={24} />
+        ) : (
+          <FiMoon className='text-emerald-800' size={24} />
+        )}
+      </motion.div>
+    </Button>
   )
 })
 
@@ -428,25 +542,19 @@ const Header = () => {
 
   // 优化主题切换
   const handleToggle = useCallback(() => {
-    // 先保存当前路径
+    // 保存当前路径
     const currentPath = location.pathname
 
-    // 添加标记防止多次快速切换
-    if (document.documentElement.hasAttribute('data-theme-switching')) {
-      return
-    }
-
-    // 切换主题
+    // 简化主题切换，移除锁定机制
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
 
-    // 如果在首页，强制重置activeSection，触发导航项重新计算活跃状态
+    // 如果在首页，更新导航项状态
     if (currentPath === '/' || currentPath === '/Homepage') {
-      // 延长延迟时间，确保主题切换完成后再更新内容
-      setTimeout(() => {
-        // 先重置，触发状态变化
-        setActiveSection('')
+      // 先重置，触发状态变化
+      setActiveSection('')
 
-        // 然后恢复到正确的section
+      // 延迟更新当前section
+      setTimeout(() => {
         const sections = ['tea-story', 'products', 'village', 'contact']
         for (const section of sections) {
           const element = document.getElementById(section)
@@ -461,7 +569,7 @@ const Header = () => {
             }
           }
         }
-      }, 100) // 增加延迟时间确保主题切换完成
+      }, 50) // 减少延迟时间
     }
   }, [setTheme, location.pathname, setActiveSection])
 
@@ -696,13 +804,11 @@ const Header = () => {
         stiffness: 50,
         damping: 15,
       }}
-      // 移除整个whileHover属性
     >
       {/* 保留进度指示器，但也移除它的悬浮效果 */}
       <motion.div
         className='absolute bottom-0 left-0 right-0 h-0.5 origin-left bg-gradient-to-r from-emerald-400 to-teal-500'
         style={{ scaleX, willChange: 'transform' }}
-        // 移除whileHover效果
       />
 
       {/* 添加外层容器，用于居中整个导航栏 */}
@@ -717,8 +823,8 @@ const Header = () => {
           style={{ height: navbarTransforms.height }}
           isBlurred={false}
         >
-          {/* 适配小屏幕的导航内容 */}
-          <NavbarContent className='lg:hidden' justify='start'>
+          {/* 移动端布局改进 - 左侧菜单按钮 */}
+          <NavbarContent className='w-1/3 lg:hidden' justify='start'>
             <div
               ref={menuToggleRef}
               onClick={isPageReady ? handleMenuToggle : undefined}
@@ -736,8 +842,11 @@ const Header = () => {
                 isselected={isMenuOpen ? 'true' : 'false'}
               />
             </div>
+          </NavbarContent>
 
-            <NavbarBrand className='flex items-center'>
+          {/* 移动端布局改进 - 中间Logo居中 */}
+          <NavbarContent className='w-1/3 lg:hidden' justify='center'>
+            <NavbarBrand className='flex items-center justify-center'>
               <motion.img
                 src={Logo}
                 alt='后花园庄宋茶'
@@ -746,6 +855,7 @@ const Header = () => {
                 animate={{ opacity: 1, rotate: 0 }}
                 transition={{ duration: 0.8 }}
               />
+              {/* 移动端使用简化版动画标题 */}
               <motion.p
                 className={
                   theme === 'dark'
@@ -761,7 +871,7 @@ const Header = () => {
             </NavbarBrand>
           </NavbarContent>
 
-          {/* 大屏幕左侧品牌标识 */}
+          {/* 大屏幕左侧品牌标识 - 使用新的动画文字组件 */}
           <NavbarContent className='hidden lg:flex' justify='start'>
             <NavbarBrand className='flex items-center'>
               <motion.div
@@ -773,40 +883,26 @@ const Header = () => {
                   damping: 12,
                   duration: 0.6,
                 }}
-                className='flex items-center'
-                onClick={e => handleNavigation('/', e)}
+                className='flex h-full items-center' // 添加 h-full
                 style={{ cursor: 'pointer' }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
               >
                 <motion.img
                   src={Logo}
                   alt='后花园庄宋茶'
-                  className={`mr-3 h-12 w-12 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
+                  className={`mr-3 h-10 w-10 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
+                  onClick={e => handleNavigation('/', e)}
+                  whileHover={{ scale: 1.05, rotate: 10 }}
+                  whileTap={{ scale: 0.95 }}
                 />
-                <motion.div className='flex flex-col'>
-                  <motion.p
-                    className={
-                      theme === 'dark'
-                        ? 'text-2xl font-bold text-emerald-300'
-                        : 'text-2xl font-bold text-emerald-700'
-                    }
-                  >
-                    后花园庄
-                  </motion.p>
-                  <motion.p
-                    className={
-                      theme === 'dark'
-                        ? 'text-sm text-emerald-300/90'
-                        : 'text-sm text-emerald-600/90'
-                    }
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                  >
-                    岛屿记忆·宋茶
-                  </motion.p>
-                </motion.div>
+                {/* 添加 my-auto 以实现垂直居中 */}
+                <div className='my-auto'>
+                  <AnimatedGradientText
+                    text='后花园庄'
+                    subText='岛屿记忆·宋茶'
+                    theme={theme}
+                    onNavigate={e => handleNavigation('/', e)}
+                  />
+                </div>
               </motion.div>
             </NavbarBrand>
           </NavbarContent>
@@ -833,52 +929,29 @@ const Header = () => {
           {/* 主题切换按钮 - 在所有屏幕尺寸下都显示 */}
           <NavbarContent justify='end' className='w-auto'>
             <NavbarItem>
-              <Button
-                isIconOnly
-                variant='light'
-                color='success'
-                className='rounded-full p-2 transition-all duration-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
-                onPress={handleToggle}
-                aria-label={
-                  theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'
-                }
-              >
-                <motion.div
-                  initial={false}
-                  animate={{ rotate: theme === 'dark' ? 180 : 0 }}
-                  transition={{
-                    duration: 0.5,
-                    type: 'spring',
-                    stiffness: 180,
-                    damping: 15,
-                  }}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className='flex items-center justify-center'
-                >
-                  {theme === 'dark' ? (
-                    <FiSun className='text-emerald-300' size={24} />
-                  ) : (
-                    <FiMoon className='text-emerald-700' size={24} />
-                  )}
-                </motion.div>
-              </Button>
+              <ThemeToggleButton theme={theme} handleToggle={handleToggle} />
             </NavbarItem>
           </NavbarContent>
 
-          {/* 改进的移动端菜单 - 更好的动画和视觉效果 */}
+          {/* 改进的移动端菜单 - 优化性能，修复卡顿问题 */}
           <NavbarMenu
             className={
               theme === 'dark'
                 ? 'bg-gray-900/95 pt-6 backdrop-blur-xl'
                 : 'bg-white/95 pt-6 backdrop-blur-xl'
             }
+            // 预加载菜单以避免首次点击卡顿
             style={{
-              transition:
-                'opacity 300ms ease, transform 300ms ease, visibility 300ms ease',
               opacity: isMenuOpen ? 1 : 0,
               visibility: isMenuOpen ? 'visible' : 'hidden',
-              transform: isMenuOpen ? 'translateY(0)' : 'translateY(-10px)',
+              // 使用硬件加速
+              willChange: 'opacity, transform',
+              // 使用硬件加速的CSS属性
+              transform: isMenuOpen
+                ? 'translateY(0)'
+                : 'translateY(-10px) translateZ(0)',
+              transition:
+                'opacity 250ms ease, transform 250ms ease, visibility 250ms ease',
               pointerEvents: isMenuOpen ? 'auto' : 'none',
             }}
           >
@@ -886,14 +959,14 @@ const Header = () => {
               {/* 添加菜单标题增强用户体验 */}
               <motion.h3
                 className={`mb-6 text-lg font-medium ${
-                  theme === 'dark' ? 'text-emerald-200' : 'text-emerald-700'
-                }`}
+                  theme === 'dark' ? 'text-emerald-300' : 'text-emerald-700'
+                }`} // 移除 text-on-transparent 类
                 initial={{ opacity: 0, x: -20 }}
                 animate={{
                   opacity: isMenuOpen ? 1 : 0,
                   x: isMenuOpen ? 0 : -20,
                 }}
-                transition={{ delay: 0.1 }}
+                transition={{ delay: 0.05 }} // 减少延迟时间
               >
                 导航菜单
               </motion.h3>
@@ -918,7 +991,7 @@ const Header = () => {
                 } pt-4 text-sm opacity-80`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: isMenuOpen ? 0.8 : 0 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.2 }} // 减少延迟时间
               >
                 <p
                   className={

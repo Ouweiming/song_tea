@@ -1,40 +1,42 @@
 import { motion } from 'framer-motion'
 import { useCallback } from 'react'
 
+import Photowall from './Photowall'
 // 导入优化的图片组件
-import goods1 from './assets/goods1.jpg'
-import goods2 from './assets/goods2.jpg'
-import goods3 from './assets/goods3.jpg'
-import goods4 from './assets/goods4.jpg'
 import village1 from './assets/village1.jpg'
 import village2 from './assets/village2.jpg'
 import OptimizedImage from './components/OptimizedImage'
+import ProductCard from './components/ProductCard'
+import SectionTitle from './components/SectionTitle'
+import { getFeaturedProducts } from './data/products'
 import { useTheme } from './useTheme'
 
 const TeaStorySection = () => {
   const { theme } = useTheme()
 
-  // 区块动画配置
+  // 获取精选产品
+  const featuredProducts = getFeaturedProducts()
+
+  // 优化动画配置
   const sectionAnimation = {
-    initial: { opacity: 0, y: 50 },
+    initial: { opacity: 0, y: 30 },
     whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, margin: '-100px' },
-    transition: { duration: 0.8 },
+    viewport: { once: true, margin: '-50px' },
+    transition: { duration: 0.7, ease: 'easeOut' },
   }
 
   // 卡片动画配置
   const cardAnimation = {
-    initial: { opacity: 0, scale: 0.9 },
+    initial: { opacity: 0, scale: 0.95 },
     whileInView: { opacity: 1, scale: 1 },
-    viewport: { once: true },
-    transition: { duration: 0.5 },
+    viewport: { once: true, margin: '-30px' },
+    transition: { duration: 0.5, ease: 'easeOut' },
   }
 
-  // 添加滚动到产品展示区的处理函数
+  // 滚动到产品区
   const scrollToProducts = useCallback(() => {
     const productsSection = document.getElementById('products')
     if (productsSection) {
-      // 获取导航栏高度，避免导航栏遮挡内容
       const headerHeight =
         document.querySelector('[class*="header"]')?.offsetHeight || 80
       const elementPosition =
@@ -48,65 +50,34 @@ const TeaStorySection = () => {
     }
   }, [])
 
-  // 茶品数据
-  const teaProducts = [
-    {
-      img: goods1,
-      title: '宋茶·墨玉',
-      desc: '高山云雾茶，滋味醇厚回甘',
-    },
-    {
-      img: goods2,
-      title: '宋茶·碧螺春',
-      desc: '香气清新持久，滋味鲜爽',
-    },
-    {
-      img: goods3,
-      title: '宋茶·红韵',
-      desc: '色泽红亮，香气高扬',
-    },
-    {
-      img: goods4,
-      title: '宋茶·白露',
-      desc: '口感清淡甘醇，回甘持久',
-    },
-  ]
-
   return (
-    <section id='tea-story' className='overflow-hidden py-20'>
-      {/* 茶品故事标题 */}
-      <motion.div
-        className='mb-16 text-center'
-        initial={{ opacity: 0, y: -20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-      >
-        <h2 className='mb-4 text-4xl font-bold text-emerald-700 dark:text-emerald-300'>
-          宋茶的世界
-        </h2>
-        <p className='mx-auto max-w-3xl text-lg font-medium text-gray-700 dark:text-gray-200'>
-          探索千年茶文化，体验自然与工艺的完美融合
-        </p>
-      </motion.div>
+    <section id='tea-story' className='overflow-hidden py-16 md:py-24'>
+      {/* 使用通用标题组件 */}
+      <SectionTitle
+        title='宋茶的世界'
+        subtitle='探索千年茶文化，体验自然与工艺的完美融合'
+        withBackground
+        className='mb-16'
+      />
 
-      <div className='container mx-auto px-6'>
+      <div className='container mx-auto px-4 md:px-6'>
         {/* 茶的起源与文化 */}
-        <motion.section className='mb-20' {...sectionAnimation}>
-          <div className='grid items-center gap-8 md:grid-cols-2'>
-            <div className='prose order-2 max-w-none text-gray-800 dark:text-gray-200 md:order-1'>
-              <h3 className='mb-6 text-2xl font-bold text-emerald-700 dark:text-emerald-300'>
+        <motion.section className='mb-24' {...sectionAnimation}>
+          <div className='grid items-center gap-12 md:grid-cols-2'>
+            <div className='text-mid-contrast prose order-2 max-w-none md:order-1'>
+              <h3 className='mb-6 font-serif text-2xl font-bold text-emerald-800 dark:text-emerald-300 md:text-3xl'>
                 茶的起源与文化
               </h3>
-              <p className='text-base leading-relaxed'>
+              <div className='mb-4 h-0.5 w-16 rounded bg-emerald-500/40'></div>
+              <p className='text-base leading-relaxed md:text-lg'>
                 茶，这种神奇的植物，在中国已有数千年的历史。相传神农尝百草时发现茶叶，从此茶便成为了中国人生活中不可或缺的一部分。唐代陆羽的《茶经》奠定了中国茶文化的基础，宋代时茶文化达到鼎盛，出现了斗茶、分茶等茶艺活动。
               </p>
-              <p className='text-base leading-relaxed'>
+              <p className='text-base leading-relaxed md:text-lg'>
                 茶文化传递的不仅是一种饮品，更是一种生活哲学。茶道代表着和、敬、清、寂的精神境界，告诉人们如何在平凡中寻找美好，在忙碌中保持宁静。
               </p>
             </div>
-            <div className='order-1 overflow-hidden rounded-lg shadow-xl dark:shadow-emerald-900/10 md:order-2'>
-              <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800'>
+            <div className='order-1 overflow-hidden rounded-2xl shadow-xl dark:shadow-emerald-900/10 md:order-2'>
+              <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800 md:h-80 lg:h-96'>
                 {/* 替换为优化的图片组件 */}
                 <OptimizedImage
                   src={village1}
@@ -123,10 +94,10 @@ const TeaStorySection = () => {
         </motion.section>
 
         {/* 后花园宋茶的故事 */}
-        <motion.section className='mb-20' {...sectionAnimation}>
-          <div className='grid items-center gap-8 md:grid-cols-2'>
-            <div className='overflow-hidden rounded-lg shadow-xl dark:shadow-emerald-900/10'>
-              <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800'>
+        <motion.section className='mb-24' {...sectionAnimation}>
+          <div className='grid items-center gap-12 md:grid-cols-2'>
+            <div className='overflow-hidden rounded-2xl shadow-xl dark:shadow-emerald-900/10'>
+              <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800 md:h-80 lg:h-96'>
                 {/* 替换为优化的图片组件 - 特别是这个大图片 */}
                 <OptimizedImage
                   src={village2}
@@ -141,13 +112,14 @@ const TeaStorySection = () => {
               </div>
             </div>
             <div className='prose max-w-none text-gray-800 dark:text-gray-200'>
-              <h3 className='mb-6 text-2xl font-bold text-emerald-700 dark:text-emerald-300'>
+              <h3 className='mb-6 font-serif text-2xl font-bold text-emerald-700 dark:text-emerald-300 md:text-3xl'>
                 后花园宋茶的故事
               </h3>
-              <p className='text-base leading-relaxed'>
+              <div className='mb-4 h-0.5 w-16 rounded bg-emerald-500/30'></div>
+              <p className='text-base leading-relaxed md:text-lg'>
                 后花园宋茶的故事始于南澳岛的绿色山脉。在果老山北侧，后花园村的茶农们世代守护着祖传的茶园和制茶工艺。这里的宋茶不仅是一种饮品，更是村民们的生活方式和精神寄托。
               </p>
-              <p className='text-base leading-relaxed'>
+              <p className='text-base leading-relaxed md:text-lg'>
                 在海岛独特的微气候条件下，后花园宋茶形成了与众不同的特性——浓郁的香气中带有淡淡的海洋气息，滋味醇厚而回甘持久，让人回味无穷。
               </p>
             </div>
@@ -155,29 +127,65 @@ const TeaStorySection = () => {
         </motion.section>
 
         {/* 制茶工艺 */}
-        <motion.section className='mb-20' {...sectionAnimation}>
-          <h3 className='mb-8 text-center text-2xl font-bold text-emerald-700 dark:text-emerald-300'>
-            传统与现代的融合：制茶工艺
-          </h3>
+        <motion.section className='mb-24' {...sectionAnimation}>
+          <SectionTitle
+            title='传统与现代的融合：制茶工艺'
+            withDecoration
+            className='mb-10'
+          />
           <div className='grid gap-6 md:grid-cols-3'>
             <motion.div
-              className='rounded-lg border border-gray-100 bg-white/90 p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800/80'
+              className='rounded-xl border border-gray-200 bg-white/90 p-8 shadow-lg transition-all hover:shadow-xl dark:border-gray-700 dark:bg-gray-800/90'
               {...cardAnimation}
               transition={{ duration: 0.5, delay: 0.1 }}
+              whileHover={{ y: -5 }}
             >
-              <h4 className='mb-4 border-b border-gray-200 pb-2 text-xl font-bold text-emerald-800 dark:border-gray-700 dark:text-emerald-300'>
+              <div className='mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'>
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-7 w-7'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4'
+                  />
+                </svg>
+              </div>
+              <h4 className='mb-4 text-xl font-bold text-emerald-800 dark:text-emerald-300'>
                 采摘
               </h4>
-              <p className='leading-relaxed text-gray-700 dark:text-gray-300'>
+              <p className='leading-relaxed text-gray-800 dark:text-gray-200'>
                 遵循&quot;一芽一叶&quot;或&quot;一芽二叶&quot;的采摘标准，只在清晨采摘，保留茶叶最佳鲜度和营养成分。
               </p>
             </motion.div>
             <motion.div
-              className='rounded-lg border border-gray-100 bg-white/90 p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800/80'
+              className='rounded-xl border border-gray-100 bg-white/90 p-8 shadow-lg transition-all hover:shadow-xl dark:border-gray-700 dark:bg-gray-800/80'
               {...cardAnimation}
               transition={{ duration: 0.5, delay: 0.2 }}
+              whileHover={{ y: -5 }}
             >
-              <h4 className='mb-4 border-b border-gray-200 pb-2 text-xl font-bold text-emerald-800 dark:border-gray-700 dark:text-emerald-300'>
+              <div className='mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300'>
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-7 w-7'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z'
+                  />
+                </svg>
+              </div>
+              <h4 className='mb-4 text-xl font-bold text-emerald-800 dark:text-emerald-300'>
                 萎凋与杀青
               </h4>
               <p className='leading-relaxed text-gray-700 dark:text-gray-300'>
@@ -185,11 +193,28 @@ const TeaStorySection = () => {
               </p>
             </motion.div>
             <motion.div
-              className='rounded-lg border border-gray-100 bg-white/90 p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800/80'
+              className='rounded-xl border border-gray-100 bg-white/90 p-8 shadow-lg transition-all hover:shadow-xl dark:border-gray-700 dark:bg-gray-800/80'
               {...cardAnimation}
               transition={{ duration: 0.5, delay: 0.3 }}
+              whileHover={{ y: -5 }}
             >
-              <h4 className='mb-4 border-b border-gray-200 pb-2 text-xl font-bold text-emerald-800 dark:border-gray-700 dark:text-emerald-300'>
+              <div className='mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300'>
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-7 w-7'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M13 10V3L4 14h7v7l9-11h-7z'
+                  />
+                </svg>
+              </div>
+              <h4 className='mb-4 text-xl font-bold text-emerald-800 dark:text-emerald-300'>
                 发酵与烘焙
               </h4>
               <p className='leading-relaxed text-gray-700 dark:text-gray-300'>
@@ -199,57 +224,40 @@ const TeaStorySection = () => {
           </div>
         </motion.section>
 
+        {/* 照片墙 */}
+        <motion.section className='mb-24' {...sectionAnimation}>
+          <SectionTitle
+            title='茶乡映像'
+            subtitle='茶园风光，记录南澳岛后花园的美丽与匠心'
+            className='mb-10'
+          />
+          <Photowall />
+        </motion.section>
+
         {/* 茶品系列 */}
         <motion.section {...sectionAnimation}>
-          <h3 className='mb-8 text-center text-2xl font-bold text-emerald-700 dark:text-emerald-300'>
-            精选宋茶
-          </h3>
-          <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-            {teaProducts.map((tea, index) => (
-              <motion.div
-                key={index}
-                className='overflow-hidden rounded-lg border border-gray-100 bg-white/90 shadow-lg dark:border-gray-700 dark:bg-gray-800/80'
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{
-                  y: -8,
-                  boxShadow:
-                    theme === 'dark'
-                      ? '0 20px 25px -5px rgba(16, 185, 129, 0.1)'
-                      : '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-                  transition: { duration: 0.3 },
-                }}
-              >
-                <div className='h-48 overflow-hidden bg-gray-100 dark:bg-gray-700'>
-                  {/* 替换为优化的图片组件 */}
-                  <OptimizedImage
-                    src={tea.img}
-                    alt={tea.title}
-                    className='h-full w-full object-cover'
-                    motionProps={{
-                      whileHover: { scale: 1.1 },
-                      transition: { duration: 0.5 },
-                    }}
-                    sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'
-                  />
-                </div>
-                <div className='p-4'>
-                  <h4 className='text-lg font-bold text-emerald-700 dark:text-emerald-300'>
-                    {tea.title}
-                  </h4>
-                  <p className='text-sm text-gray-600 dark:text-gray-300'>
-                    {tea.desc}
-                  </p>
-                </div>
-              </motion.div>
+          <SectionTitle
+            title='精选宋茶'
+            subtitle='每一款宋茶都经过严格筛选，传承经典茶韵，彰显独特风味'
+            className='mb-10'
+          />
+
+          <div className='grid gap-8 sm:grid-cols-2 lg:grid-cols-4'>
+            {featuredProducts.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                variant='preview'
+                delay={index}
+                theme={theme}
+              />
             ))}
           </div>
-          <div className='mt-10 text-center'>
+
+          <div className='mt-16 text-center'>
             <motion.button
               onClick={scrollToProducts}
-              className='rounded-full bg-emerald-800 px-8 py-3 font-medium text-white shadow-md transition-colors duration-300 hover:bg-emerald-900 hover:shadow-lg dark:bg-emerald-700 dark:hover:bg-emerald-600'
+              className='rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 px-10 py-4 font-medium text-white shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20 dark:from-emerald-600 dark:to-emerald-500'
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

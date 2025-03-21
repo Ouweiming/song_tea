@@ -83,36 +83,42 @@ const ContactForm = () => {
   return (
     <div
       id='contact'
-      className='flex min-h-screen items-center justify-center bg-gradient-to-r from-green-800 to-emerald-950 px-4 py-16 sm:px-6 lg:px-8'
+      className='flex min-h-screen items-center justify-center bg-gradient-to-r from-green-900 to-emerald-800 px-4 py-16 sm:px-6 lg:px-8'
     >
       <div className='w-full max-w-7xl space-y-8'>
         <div className='grid grid-cols-1 gap-8 md:grid-cols-2'>
           <div className='space-y-20 text-white'>
-            <h1 className='text-4xl font-bold'>加入我们的茶叶世界，共创辉煌</h1>
-            <p>
+            <h1 className='text-on-dark text-4xl font-bold text-white'>
+              加入我们的茶叶世界，共创辉煌
+            </h1>
+            <p className='text-on-dark text-gray-100'>
               如果您对加入后花园宋茶品牌有兴趣，欢迎随时联系我们。我们期待与您共同开创茶叶市场的新篇章。
             </p>
 
             <div>
-              <h2 className='text-xl font-semibold'>联系我们</h2>
-              <p>联系人：余先生</p>
-              <p>电话：(+86) 13829600014</p>
-              <p>
+              <h2 className='text-on-dark text-xl font-semibold text-white'>
+                联系我们
+              </h2>
+              <p className='text-gray-100'>联系人：余先生</p>
+              <p className='text-gray-100'>电话：(+86) 13829600014</p>
+              <p className='text-gray-100'>
                 联系邮箱：
                 <a
                   href='mailto:308683293@qq.com'
-                  className='text-emerald-400 underline'
+                  className='text-emerald-300 underline hover:text-emerald-200'
                 >
                   308683293@qq.com
                 </a>
               </p>
             </div>
             <div>
-              <p className='text-sm'>Copyright &copy;2024 醉茶小皇帝</p>
+              <p className='text-sm text-gray-300'>
+                Copyright &copy;2024 醉茶小皇帝
+              </p>
             </div>
           </div>
 
-          <div className='space-y-6 rounded-lg bg-white p-8 shadow-lg dark:bg-teal-900'>
+          <div className='space-y-6 rounded-lg bg-white p-8 shadow-lg dark:bg-gray-800'>
             {submitSuccess && (
               <div className='mb-4 rounded-md bg-green-100 p-4 text-green-800 dark:bg-green-800 dark:text-green-100'>
                 <p className='text-center font-medium'>
@@ -123,7 +129,7 @@ const ContactForm = () => {
 
             <form onSubmit={handleSubmit}>
               <div className='w-full'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-white'>
+                <label className='block text-sm font-medium text-gray-800 dark:text-white'>
                   姓名 <span className='text-red-500'>*</span>
                 </label>
                 <input

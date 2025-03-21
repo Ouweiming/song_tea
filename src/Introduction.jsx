@@ -90,19 +90,19 @@ const Introduction = () => {
         <div className='flex-1 space-y-8 text-left'>
           <motion.h2
             ref={refH1First}
-            className='text-3xl font-bold text-emerald-600 dark:text-emerald-400 md:text-4xl lg:text-5xl'
+            className='text-on-gradient text-3xl font-bold text-emerald-800 dark:text-emerald-300 md:text-4xl lg:text-5xl'
             {...animationConfigH1First}
           >
             后花园村介绍
           </motion.h2>
           <motion.div
             ref={refPFirst}
-            className='prose prose-lg max-w-none text-gray-700 dark:prose-invert dark:text-gray-300'
+            className='prose prose-lg max-w-none text-gray-800 dark:prose-invert dark:text-gray-200'
             {...animationConfigPFirst}
           >
             <p className='leading-relaxed'>
               后花园村位于南澳岛中部主峰果老山北侧，由4个自然村组成，总人口约335人。这里以旅游与茶产业为支柱，
-              <strong className='text-emerald-700 dark:text-emerald-400'>
+              <strong className='text-emerald-800 dark:text-emerald-300'>
                 宋茶
               </strong>
               作为村庄特色名片，深受游客喜爱。

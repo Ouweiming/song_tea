@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types'
 import { memo, useEffect, useMemo, useState } from 'react'
-import { PacmanLoader } from 'react-spinners'
+import { RingLoader } from 'react-spinners'
 
 // 引入PacmanLoader组件
 
@@ -43,7 +43,7 @@ const LoadingSpinner = memo(({ size = 25, color }) => {
         backgroundColor: spinnerStyles.backgroundColor,
       }}
     >
-      <PacmanLoader
+      <RingLoader
         color={spinnerStyles.spinnerColor}
         loading={true}
         size={size}

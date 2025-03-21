@@ -1,65 +1,142 @@
+/* postcss-ignore-start */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* postcss-ignore-end */
 
-/* 添加在文件顶部或适当位置 */
+/* 全局颜色变量 - 定义所有颜色的中心位置 */
+:root {
+  /* 主色调 */
+  --color-primary-50: rgb(236, 253, 245);
+  --color-primary-100: rgb(209, 250, 229);
+  --color-primary-200: rgb(167, 243, 208);
+  --color-primary-300: rgb(110, 231, 183);
+  --color-primary-400: rgb(52, 211, 153);
+  --color-primary-500: rgb(16, 185, 129);
+  --color-primary-600: rgb(5, 150, 105);
+  --color-primary-700: rgb(4, 120, 87);
+  --color-primary-800: rgb(6, 95, 70);
+  --color-primary-900: rgb(6, 78, 59);
+
+  /* 文本颜色 - 亮色模式 */
+  --text-light-primary: rgb(31, 41, 55); /* 主要文本 */
+  --text-light-secondary: rgb(75, 85, 99); /* 次要文本 */
+  --text-light-muted: rgb(107, 114, 128); /* 弱化文本 */
+  --text-light-brand: rgb(4, 120, 87); /* 品牌文本 */
+  --text-light-brand-hover: rgb(5, 150, 105); /* 品牌悬停 */
+
+  /* 背景颜色 - 亮色模式 */
+  --bg-light-primary: rgb(255, 255, 255); /* 主背景 */
+  --bg-light-secondary: rgb(243, 244, 246); /* 次要背景 */
+  --bg-light-muted: rgb(229, 231, 235); /* 弱化背景 */
+
+  /* 定制化渐变色 - 亮色模式 */
+  --gradient-light-from: rgb(246, 242, 233);
+  --gradient-light-to: rgb(142, 212, 202);
+}
+
+/* 暗色模式变量 */
+.dark {
+  /* 文本颜色 - 暗色模式 */
+  --text-dark-primary: rgb(243, 244, 246); /* 主要文本 */
+  --text-dark-secondary: rgb(209, 213, 219); /* 次要文本 */
+  --text-dark-muted: rgb(156, 163, 175); /* 弱化文本 */
+  --text-dark-brand: rgb(52, 211, 153); /* 品牌文本 */
+  --text-dark-brand-hover: rgb(110, 231, 183); /* 品牌悬停 */
+
+  /* 背景颜色 - 暗色模式 */
+  --bg-dark-primary: rgb(17, 24, 39); /* 主背景 */
+  --bg-dark-secondary: rgb(31, 41, 55); /* 次要背景 */
+  --bg-dark-muted: rgb(55, 65, 81); /* 弱化背景 */
+
+  /* 定制化渐变色 - 暗色模式 - 调整更高对比度 */
+  --gradient-dark-from: rgb(15, 65, 80);
+  --gradient-dark-to: rgb(95, 160, 110);
+}
+
+/* 对比度增强样式 - 移除标题的文本阴影 */
+.text-enhance {
+  /* 移除文本阴影 */
+  text-shadow: none;
+}
+
+.dark .text-enhance {
+  /* 移除文本阴影 */
+  text-shadow: none;
+}
+
+/* 透明背景上的文本，移除标题栏文本阴影 */
+.text-on-transparent {
+  /* 移除文本阴影 */
+  text-shadow: none;
+}
+
+.dark .text-on-transparent {
+  /* 移除文本阴影 */
+  text-shadow: none;
+}
+
+/* 适用于深色背景上的明亮文本 */
+.text-on-dark {
+  /* 移除文本阴影，除非是按钮上的文本 */
+  text-shadow: none;
+}
+
+/* 适用于浅色背景上的暗色文本 */
+.text-on-light {
+  text-shadow: none;
+}
+
+/* 渐变背景文本样式 */
+.text-on-gradient {
+  /* 移除文本阴影 */
+  text-shadow: none;
+}
+
+.dark .text-on-gradient {
+  /* 移除文本阴影 */
+  text-shadow: none;
+}
 
 /* 主题切换保护样式 */
 :root[data-theme-switching='true'] * {
   transition: none !important;
 }
 
-/* 文本颜色保护 - 确保明确设置优先级高的颜色规则 */
-.dark .text-emerald-300,
-.dark .text-emerald-400,
-.dark .text-emerald-500 {
-  color: var(--emerald-300, rgb(110, 231, 183)) !important;
+/* 添加悬停过渡效果 */
+a,
+button {
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    text-shadow 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
-.dark .text-emerald-600,
-.dark .text-emerald-700 {
-  color: var(--emerald-400, rgb(52, 211, 153)) !important;
-}
+/* 设置基础文本颜色 - 使用注释包裹@layer解决警告 */
+/* postcss-ignore-start */
+@layer base {
+  body {
+    @apply text-gray-800 dark:text-gray-200;
+  }
 
-/* 亮色模式保护 */
-:root:not(.dark) .text-emerald-600,
-:root:not(.dark) .text-emerald-700 {
-  color: var(--emerald-700, rgb(4, 120, 87)) !important;
-}
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply text-gray-900 dark:text-white;
+  }
 
-:root:not(.dark) .text-emerald-500,
-:root:not(.dark) .text-emerald-400 {
-  color: var(--emerald-500, rgb(16, 185, 129)) !important;
+  /* 统一文本链接颜色 */
+  a:not([class]) {
+    @apply text-emerald-700 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300;
+  }
 }
-
-/* 定义CSS变量作为颜色备份机制 */
-:root {
-  --emerald-300: rgb(110, 231, 183);
-  --emerald-400: rgb(52, 211, 153);
-  --emerald-500: rgb(16, 185, 129);
-  --emerald-600: rgb(5, 150, 105);
-  --emerald-700: rgb(4, 120, 87);
-}
-
-/* 在你的全局 CSS 文件中（例如 index.css 或者 custom.css） */
-.prose-dark {
-  --tw-prose-body: #d1d5db;
-  --tw-prose-headings: #f3f4f6;
-  --tw-prose-lead: #e5e7eb;
-  --tw-prose-links: #60a5fa;
-  --tw-prose-bold: #f9fafb;
-  --tw-prose-counters: #9ca3af;
-  --tw-prose-bullets: #6b7280;
-  --tw-prose-hr: #4b5563;
-  --tw-prose-quotes: #9ca3af;
-  --tw-prose-quote-borders: #4b5563;
-  --tw-prose-captions: #9ca3af;
-  --tw-prose-code: #d1d5db;
-  --tw-prose-pre-code: #e5e7eb;
-  --tw-prose-pre-bg: #1f2937;
-  --tw-prose-th-borders: #374151;
-  --tw-prose-td-borders: #4b5563;
-}
+/* postcss-ignore-end */
 
 /* Custom styles for dark mode logo */
 .logo-light {
@@ -71,3 +148,35 @@
   filter: invert(100%) sepia(100%) saturate(0%) hue-rotate(93deg)
     brightness(104%) contrast(104%);
 }
+
+/* 为各种背景情况定义高对比度文本，但移除阴影效果 */
+.bg-emerald-900 .text-white,
+.bg-emerald-800 .text-white,
+.bg-emerald-700 .text-white {
+  /* 移除文本阴影 */
+  text-shadow: none;
+}
+
+/* 高对比度文本辅助类 - 使用注释包裹@apply解决警告 */
+/* postcss-ignore-start */
+.text-high-contrast {
+  @apply text-gray-900 dark:text-white;
+}
+
+.text-mid-contrast {
+  @apply text-gray-800 dark:text-gray-100;
+}
+/* postcss-ignore-end */
+
+/* 创建特殊类用于需要保留阴影的按钮文本 */
+.text-shadow-button {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* VSCode CSS 语言特性说明 */
+/* 
+  如果仍然收到警告，可以:
+  1. 安装 VSCode Tailwind CSS IntelliSense 插件
+  2. 在 VSCode 设置中添加:
+     "css.validate": false
+*/
