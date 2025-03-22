@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FiFilter } from 'react-icons/fi'
 
 import ProductCard from './components/ProductCard'
 import SectionTitle from './components/SectionTitle'
 import { filterProductsByCategory, getAllCategories } from './data/products'
 import { useTheme } from './useTheme'
+import { throttle } from './utils/domUtils'
 
 const ShoppingCartList = () => {
   const [activeCategory, setActiveCategory] = useState('all')
@@ -14,6 +15,56 @@ const ShoppingCartList = () => {
   // 使用统一的数据管理函数
   const categories = getAllCategories()
   const filteredProducts = filterProductsByCategory(activeCategory)
+
+  const listRef = useRef(null)
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 })
+
+  // 仅当滚动到可视区域时才渲染，减少DOM元素数量
+  useEffect(() => {
+    if (filteredProducts.length > 20) {
+      const updateVisibleItems = throttle(() => {
+        if (!listRef.current) return
+
+        // 使用requestAnimationFrame批量读取DOM，避免强制回流
+        requestAnimationFrame(() => {
+          const containerRect = listRef.current.getBoundingClientRect()
+          const viewportHeight = window.innerHeight
+          const scrollY = window.scrollY
+
+          // 计算新的可见范围
+          if (containerRect.top < viewportHeight && containerRect.bottom > 0) {
+            // 存储计算所需的所有值
+            const topOffset = containerRect.top
+            const itemHeight = 280 // 这个值应根据实际项目高度调整
+
+            // 基于缓存的值计算可见范围
+            const visibleStart = Math.max(
+              0,
+              Math.floor((scrollY - topOffset) / itemHeight)
+            )
+            const visibleEnd = Math.min(
+              filteredProducts.length,
+              Math.ceil((scrollY + viewportHeight - topOffset) / itemHeight) + 5
+            )
+
+            // 一次性设置状态更新
+            setVisibleRange({ start: visibleStart, end: visibleEnd })
+          }
+        })
+      }, 200)
+
+      window.addEventListener('scroll', updateVisibleItems, { passive: true })
+      updateVisibleItems()
+
+      return () => window.removeEventListener('scroll', updateVisibleItems)
+    }
+  }, [filteredProducts.length])
+
+  // 渲染可见项目
+  const visibleProducts =
+    filteredProducts.length > 20
+      ? filteredProducts.slice(visibleRange.start, visibleRange.end)
+      : filteredProducts
 
   return (
     <section id='products' className='bg-gray-50 py-16 dark:bg-gray-900/30'>
@@ -56,8 +107,8 @@ const ShoppingCartList = () => {
         </motion.div>
 
         {/* 产品网格 */}
-        <div className='grid gap-8 sm:grid-cols-2 lg:grid-cols-3'>
-          {filteredProducts.map((product, index) => (
+        <div className='grid gap-8 sm:grid-cols-2 lg:grid-cols-3' ref={listRef}>
+          {visibleProducts.map((product, index) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 20 }}

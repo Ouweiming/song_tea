@@ -9,17 +9,6 @@ import VideoSection from './Video'
 import Header from './header'
 import { useTheme } from './useTheme'
 
-// 使用动态导入优化懒加载
-const Introduction = lazy(() => {
-  // 减少闪烁
-  return new Promise(resolve => {
-    // 预加载延迟以优化页面加载体验
-    import('./Introduction').then(module => {
-      setTimeout(() => resolve(module), 100)
-    })
-  })
-})
-
 // 其他组件使用类似的加载策略
 const TeaStorySection = lazy(() => import('./TeaStorySection'))
 const ShoppingCartList = lazy(() => import('./ShoppingCartList'))
@@ -137,11 +126,6 @@ export default function Homepage() {
               <div className='relative flex flex-1 flex-col'>
                 <VideoSection />
               </div>
-
-              {/* 使用优化的Suspense方式懒加载组件 */}
-              <Suspense fallback={<div className='h-screen' />}>
-                <Introduction />
-              </Suspense>
 
               <Suspense fallback={<div className='h-screen' />}>
                 <TeaStorySection />

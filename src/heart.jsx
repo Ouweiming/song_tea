@@ -3,6 +3,9 @@ import { memo, useEffect, useState } from 'react'
 // 明确导入React
 import { useInView } from 'react-intersection-observer'
 
+// 添加throttle函数导入
+import { throttle } from './utils/domUtils'
+
 // 创建叶子形状的变体
 const teaLeafPath =
   'M12 21C7 17 2 13 2 8.5C2 5.42 4.42 3 7.5 3c1.74 0 3 1 4.5 3C13.5 4 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5c0 4.5-5 8.5-10 12.5z'
@@ -34,6 +37,30 @@ const leafVariants = {
     scale: 1,
     opacity: 1,
   },
+}
+
+// 提前声明updateSize函数（在useEffect外部）
+const calculateSize = () => {
+  // 根据窗口宽度计算适当的尺寸
+  if (window.innerWidth < 640) {
+    return 70
+  } else if (window.innerWidth < 768) {
+    return 80
+  } else if (window.innerWidth < 1024) {
+    return 100
+  } else {
+    return 120
+  }
+}
+
+// 提前声明handleResize函数（在useEffect外部）
+const createResizeHandler = setSize => {
+  return function handleResize() {
+    // 使用requestAnimationFrame避免布局抖动
+    requestAnimationFrame(() => {
+      setSize(calculateSize())
+    })
+  }
 }
 
 // 使用memo优化组件
@@ -85,35 +112,40 @@ const Heart = memo(() => {
 
   // 使用防抖优化resize事件
   useEffect(() => {
-    let resizeTimeout
+    // 使用ResizeObserver代替窗口resize事件
+    if ('ResizeObserver' in window) {
+      // 初始化大小
+      setSize(calculateSize())
 
-    function handleResize() {
-      // 清除之前的计时器
-      clearTimeout(resizeTimeout)
+      // 创建性能更高的ResizeObserver
+      const resizeObserver = new ResizeObserver(
+        throttle(() => {
+          requestAnimationFrame(() => {
+            setSize(calculateSize())
+          })
+        }, 200)
+      )
 
-      // 设置新的计时器，防抖处理
-      resizeTimeout = setTimeout(() => {
-        // 更加精细的响应式大小调整
-        if (window.innerWidth < 640) {
-          setSize(70)
-        } else if (window.innerWidth < 768) {
-          setSize(80)
-        } else if (window.innerWidth < 1024) {
-          setSize(100)
-        } else {
-          setSize(120)
-        }
-      }, 200) // 增加防抖延迟
-    }
+      // 只观察根元素
+      resizeObserver.observe(document.documentElement)
 
-    window.addEventListener('resize', handleResize)
-    // 初始化大小
-    handleResize()
+      return () => resizeObserver.disconnect()
+    } else {
+      // 回退到原来的方法，但保持防抖
+      let resizeTimeout
 
-    // 组件卸载时移除事件监听器和清除计时器
-    return () => {
-      window.removeEventListener('resize', handleResize)
-      clearTimeout(resizeTimeout)
+      // 使用前面声明的createResizeHandler函数来创建resize处理函数
+      const resizeHandler = createResizeHandler(setSize)
+
+      window.addEventListener('resize', resizeHandler)
+      // 初始化大小
+      setSize(calculateSize())
+
+      // 组件卸载时移除事件监听器和清除计时器
+      return () => {
+        window.removeEventListener('resize', resizeHandler)
+        clearTimeout(resizeTimeout)
+      }
     }
   }, [])
 

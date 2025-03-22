@@ -34,7 +34,8 @@ const OptimizedImage = forwardRef(
     const [isLoaded, setIsLoaded] = useState(false)
     const [hasError, setHasError] = useState(false)
     const imgRef = useRef(null)
-    // 修改默认图片源为原始图片，不再默认使用占位图
+
+    // 直接使用导入的图片模块，无需转换路径
     const [imgSrc, setImgSrc] = useState(priority ? src : src)
 
     // 处理图片加载逻辑
@@ -44,8 +45,10 @@ const OptimizedImage = forwardRef(
           entries => {
             entries.forEach(entry => {
               if (entry.isIntersecting) {
-                // 直接加载原始图片，不使用生成的路径
-                setImgSrc(src)
+                // 当图片进入视口时，使用RAF设置图片源，减少布局抖动
+                requestAnimationFrame(() => {
+                  setImgSrc(src)
+                })
                 observer.disconnect()
               }
             })
@@ -59,26 +62,10 @@ const OptimizedImage = forwardRef(
       return undefined
     }, [src, priority])
 
-    // 修改 srcSet 生成函数 - 暂时禁用以确保基本功能正常
+    // 简化的srcSet生成 - 暂时禁用，使用导入的图片
     const generateSrcSet = () => {
-      // 暂时返回空字符串，使用原始图片
+      // 如果使用导入的图片模块，不需要生成srcSet
       return ''
-
-      /* 
-    // 保留原代码注释，当优化图片系统准备好时可以取消注释
-    // 提取文件扩展名
-    const extension = src.split('.').pop()
-    const basePath = src.substring(0, src.lastIndexOf('.'))
-
-    // 为不同尺寸生成图片地址
-    const sizes = [320, 640, 960, 1280, 1920]
-    const srcSet = sizes.map(size => {
-      // 如果是构建后的资源，尝试使用宽度后缀约定
-      return `${basePath}-${size}w.${extension} ${size}w`
-    })
-
-    return srcSet.join(', ')
-    */
     }
 
     const handleLoad = e => {

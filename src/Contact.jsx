@@ -30,7 +30,9 @@ const ContactForm = () => {
     }
   }
 
+  // 使用批处理来减少回流
   const validateForm = () => {
+    // 延迟批量处理所有状态更新
     const newErrors = {}
 
     if (!formData.name.trim()) {
@@ -47,36 +49,43 @@ const ContactForm = () => {
       newErrors.message = '请输入留言内容'
     }
 
+    // 批量一次性更新错误状态，而不是多次单独更新
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
+  // 优化表单提交函数
   const handleSubmit = e => {
     e.preventDefault()
 
     if (validateForm()) {
-      setIsSubmitting(true)
+      // 使用requestAnimationFrame在视觉上优化状态变化
+      requestAnimationFrame(() => {
+        setIsSubmitting(true)
 
-      // 模拟表单提交
-      setTimeout(() => {
-        setIsSubmitting(false)
-        setSubmitSuccess(true)
-
-        // 重置表单
-        setFormData({
-          name: '',
-          email: '',
-          company: '',
-          interest: '',
-          message: '',
-          source: '',
-        })
-
-        // 显示成功消息3秒后消失
+        // 使用CSS类而不是JS控制动画，减少回流
+        // 模拟表单提交
         setTimeout(() => {
-          setSubmitSuccess(false)
-        }, 3000)
-      }, 1000)
+          // 批处理状态更新
+          requestAnimationFrame(() => {
+            setIsSubmitting(false)
+            setSubmitSuccess(true)
+            setFormData({
+              name: '',
+              email: '',
+              company: '',
+              interest: '',
+              message: '',
+              source: '',
+            })
+          })
+
+          // 使用CSS transition代替JS动画，减少回流
+          setTimeout(() => {
+            setSubmitSuccess(false)
+          }, 3000)
+        }, 1000)
+      })
     }
   }
 

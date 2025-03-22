@@ -42,14 +42,36 @@ const NavigationBubble = () => {
         navigate('/')
         // 给浏览器时间加载首页后再滚动
         setTimeout(() => {
-          document.querySelector(path)?.scrollIntoView({ behavior: 'smooth' })
+          safelyScrollToElement(path)
         }, 100)
       } else {
-        document.querySelector(path)?.scrollIntoView({ behavior: 'smooth' })
+        safelyScrollToElement(path)
       }
     } else {
       navigate(path)
     }
+  }
+
+  // 安全的滚动函数，避免强制回流
+  const safelyScrollToElement = selector => {
+    requestAnimationFrame(() => {
+      const element = document.querySelector(selector)
+      if (!element) return
+
+      // 批量读取
+      const headerElement = document.querySelector('[class*="header"]')
+      const headerHeight = headerElement ? headerElement.offsetHeight : 80
+      const elementRect = element.getBoundingClientRect()
+      const offsetPosition = elementRect.top + window.scrollY - headerHeight
+
+      // 批量写入
+      requestAnimationFrame(() => {
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        })
+      })
+    })
   }
 
   // 容器变体

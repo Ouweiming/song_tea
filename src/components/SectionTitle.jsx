@@ -24,16 +24,16 @@ const SectionTitle = ({
       )}
 
       <h2
-        className={`text-high-contrast mb-4 font-serif text-3xl font-bold md:text-4xl ${
+        className={`text-high-contrast mb-4 font-serif text-3xl font-bold md:text-4xl lg:text-5xl ${
           center ? '' : 'text-left'
-        }`} // 移除 text-on-gradient 类
+        }`}
       >
         {title}
       </h2>
 
       {withDecoration && (
         <div
-          className={`mb-4 h-1 w-20 rounded bg-gradient-to-r from-emerald-600 to-teal-500 dark:from-emerald-500 dark:to-teal-400 ${
+          className={`mb-5 h-1 w-20 rounded bg-gradient-to-r from-emerald-600 to-teal-500 dark:from-emerald-500 dark:to-teal-400 ${
             center ? 'mx-auto' : ''
           }`}
         ></div>
@@ -41,7 +41,7 @@ const SectionTitle = ({
 
       {subtitle && (
         <p
-          className={`text-mid-contrast max-w-2xl ${
+          className={`text-mid-contrast max-w-2xl text-lg md:text-xl ${
             center ? 'mx-auto px-6' : ''
           }`}
         >

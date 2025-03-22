@@ -19,7 +19,6 @@ if (typeof window !== 'undefined') {
 
 // 预加载关键组件
 const HomePage = lazy(() => import('./Homepage'))
-const Introduction = lazy(() => import('./Introduction'))
 
 // 主动预加载其他页面组件
 const preloadComponents = () => {
@@ -27,7 +26,6 @@ const preloadComponents = () => {
     window.requestIdleCallback(() => {
       // 静默预加载，但不阻塞主线程
       import('./Homepage')
-      import('./Introduction')
     })
   }
 }
@@ -46,7 +44,6 @@ const router = createBrowserRouter(
         }}
       />
       <Route path='/Homepage' element={<HomePage />} />
-      <Route path='/Introduction' element={<Introduction />} />
     </>
   ),
   {

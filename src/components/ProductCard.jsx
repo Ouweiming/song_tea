@@ -61,16 +61,16 @@ const ProductCard = ({
       </div>
 
       <div className='p-6'>
-        <h4 className='mb-2 text-xl font-bold text-emerald-800 dark:text-emerald-300'>
+        <h4 className='mb-2 text-xl font-bold text-emerald-800 dark:text-emerald-300 md:text-2xl'>
           {product.name}
         </h4>
-        <p className='mb-4 text-gray-800 dark:text-gray-300'>
+        <p className='mb-4 text-base text-gray-800 dark:text-gray-300 md:text-lg'>
           {product.description}
         </p>
 
         {/* 分类标签 */}
         <div className='flex'>
-          <span className='inline-block rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-800 dark:bg-emerald-800/50 dark:text-emerald-200'>
+          <span className='inline-block rounded-full bg-emerald-100 px-3 py-1 text-base font-medium text-emerald-800 dark:bg-emerald-800/50 dark:text-emerald-200'>
             {product.category}
           </span>
         </div>
@@ -87,10 +87,10 @@ const ProductCard = ({
             <div className='w-full'>
               <button
                 disabled
-                className='flex w-full cursor-not-allowed items-center justify-center rounded-lg bg-emerald-500 px-4 py-3 font-bold text-white opacity-70 transition-colors duration-200 dark:bg-emerald-600 dark:text-white'
+                className='flex w-full cursor-not-allowed items-center justify-center rounded-lg bg-emerald-500 px-4 py-3 text-base font-bold text-white opacity-70 transition-colors duration-200 dark:bg-emerald-600 dark:text-white md:text-lg'
               >
                 <FaShoppingCart className='mr-2' /> Taobao
-                <span className='ml-2 rounded-full bg-yellow-500 px-2 py-1 text-xs text-white'>
+                <span className='ml-2 rounded-full bg-yellow-500 px-2 py-1 text-xs text-white md:text-sm'>
                   敬请期待
                 </span>
               </button>

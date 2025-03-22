@@ -59,18 +59,21 @@ export function optimizeCssLoading() {
   // 使用requestIdleCallback延迟加载非关键CSS
   Promise.all(priorityLoads).then(() => {
     if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(() => {
-        nonCriticalCss.forEach(css => {
-          const link = document.createElement('link')
-          link.rel = 'stylesheet'
-          link.href = css.href
-          link.media = css.media
-          if (css.onload) {
-            link.onload = new Function(css.onload)
-          }
-          document.head.appendChild(link)
-        })
-      })
+      window.requestIdleCallback(
+        () => {
+          nonCriticalCss.forEach(css => {
+            const link = document.createElement('link')
+            link.rel = 'stylesheet'
+            link.href = css.href
+            link.media = css.media
+            if (css.onload) {
+              link.onload = new Function(css.onload)
+            }
+            document.head.appendChild(link)
+          })
+        },
+        { timeout: 2000 }
+      ) // 设置超时保证最终会加载
     } else {
       // 回退方案
       setTimeout(() => {
