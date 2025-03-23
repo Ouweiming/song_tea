@@ -1,21 +1,17 @@
 import { motion } from 'framer-motion'
-import { useCallback } from 'react'
 
 import Photowall from './Photowall'
 // 导入优化的图片组件
 import village1 from './assets/village1.jpg'
 import village2 from './assets/village2.jpg'
 import OptimizedImage from './components/OptimizedImage'
-import ProductCard from './components/ProductCard'
 import SectionTitle from './components/SectionTitle'
-import { getFeaturedProducts } from './data/products'
 import { useTheme } from './useTheme'
 
 const TeaStorySection = () => {
-  const { theme } = useTheme()
+  useTheme()
 
   // 获取精选产品
-  const featuredProducts = getFeaturedProducts()
 
   // 优化动画配置
   const sectionAnimation = {
@@ -34,28 +30,6 @@ const TeaStorySection = () => {
   }
 
   // 滚动到产品区
-  const scrollToProducts = useCallback(() => {
-    // 使用正确的requestAnimationFrame模式，避免强制回流
-    requestAnimationFrame(() => {
-      const productsSection = document.getElementById('products')
-      if (!productsSection) return
-
-      // 批量读取阶段 - 一次性读取所有需要的度量值
-      const headerElement = document.querySelector('[class*="header"]')
-      const headerHeight = headerElement ? headerElement.offsetHeight : 80
-      const rect = productsSection.getBoundingClientRect()
-      const elementPosition = rect.top + window.scrollY
-      const offsetPosition = elementPosition - headerHeight
-
-      // 批量写入阶段 - 只执行一次DOM更新
-      requestAnimationFrame(() => {
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth',
-        })
-      })
-    })
-  }, [])
 
   return (
     <section id='tea-story' className='overflow-hidden py-16 md:py-24'>
@@ -242,38 +216,7 @@ const TeaStorySection = () => {
           />
           <Photowall />
         </motion.section>
-        <motion.section {...sectionAnimation}>
-          <SectionTitle
-            title='精选宋茶'
-            subtitle='每一款宋茶都经过严格筛选，传承经典茶韵，彰显独特风味'
-            className='mb-10'
-          />
-          <div className='grid gap-6 md:grid-cols-4'>
-            {featuredProducts.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <ProductCard
-                  product={product}
-                  variant='preview'
-                  theme={theme} // 添加theme属性以使用该变量
-                />
-              </motion.div>
-            ))}
-          </div>
-          <div className='mt-16 text-center'>
-            <motion.button
-              onClick={scrollToProducts}
-              className='rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 px-10 py-4 font-medium text-white shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20 dark:from-emerald-600 dark:to-emerald-500'
-            >
-              探索更多茶品
-            </motion.button>
-          </div>
-        </motion.section>
+
       </div>
     </section>
   )

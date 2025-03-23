@@ -32,15 +32,7 @@ const THEME = {
 }
 
 // 仅在需要时动态导入ReactPlayer
-const ReactPlayer = lazy(() =>
-  import(/* webpackChunkName: "react-player" */ 'react-player').then(module => {
-    // 给浏览器一些呼吸时间
-    return new Promise(resolve => {
-      // 延迟100ms以避免主线程阻塞
-      setTimeout(() => resolve(module), 100)
-    })
-  })
-)
+const ReactPlayer = lazy(() => import('react-player'))
 
 // 使用 memo 优化 VideoPlayer 组件，防止不必要的重渲染
 const VideoPlayer = memo(({ url, onReady, onError }) => {
@@ -149,7 +141,67 @@ VideoPlayer.propTypes = {
   onError: PropTypes.func,
 }
 
-// 优化VideoBackground组件 - 删除Welcome组件的引用
+// Welcome 组件 - 优化字体大小和层次感
+const Welcome = () => {
+  // 标题动画配置保持不变
+
+  // 文本渐变效果动画保持不变
+
+  return (
+    <div className='relative w-full overflow-hidden py-12 md:py-16 lg:py-20'>
+      {/* 背景装饰元素保持不变 */}
+      <motion.div
+        className='absolute -left-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-500/5 to-teal-300/5 blur-2xl'
+        animate={{
+          scale: [1, 1.1], // Change from [1, 1.1, 1] to [1, 1.1]
+          opacity: [0.2, 0.3], // Change from [0.2, 0.3, 0.2] to [0.2, 0.3]
+        }}
+        transition={{
+          duration: 10,
+          repeat: Infinity,
+          repeatType: 'reverse',
+          ease: 'easeInOut',
+        }}
+        aria-hidden='true'
+      />
+
+      <motion.div
+        className='absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-gradient-to-tl from-teal-400/5 to-emerald-300/5 blur-2xl'
+        animate={{
+          scale: [1, 1.1], // Change from [1, 1.1, 1] to [1, 1.1]
+          opacity: [0.15, 0.25], // Change from [0.15, 0.25, 0.15] to [0.15, 0.25]
+        }}
+        transition={{
+          duration: 12,
+          repeat: Infinity,
+          repeatType: 'reverse',
+          delay: 1,
+        }}
+        aria-hidden='true'
+      />
+
+      <div className='relative mx-auto flex max-w-4xl flex-col items-center justify-center px-6 text-center'>
+
+
+        {/* 装饰元素与描述文本 - 调整字体大小和间距 */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+          className='flex flex-col items-center'
+        >
+          <Heart className='mb-3 text-2xl text-emerald-500 dark:text-emerald-400 sm:mb-4 sm:text-3xl md:text-4xl' />
+
+          <p className='max-w-xl text-base font-medium leading-relaxed text-gray-700 dark:text-gray-300 sm:max-w-2xl sm:text-lg md:text-xl'>
+            传承千年茶韵，体验自然与传统的完美融合
+          </p>
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+
+// 优化VideoBackground组件
 const VideoBackground = () => {
   const [showVideo, setShowVideo] = useState(false)
   const [selectedVideo, setSelectedVideo] = useState('')
@@ -246,8 +298,8 @@ const VideoBackground = () => {
         <motion.span
           className='absolute -inset-3 rounded-full bg-emerald-400 opacity-20 dark:bg-emerald-300 dark:opacity-30'
           animate={{
-            scale: [1.2, 4.6, 1.2], // 缩小最大缩放比例
-            opacity: [0.2, 0.3, 0.2], // 稍微降低不透明度
+            scale: [1.2, 4.6], // Change from [1.2, 4.6, 1.2] to [1.2, 4.6]
+            opacity: [0.2, 0.3], // Change from [0.2, 0.3, 0.2] to [0.2, 0.3]
           }}
           transition={{
             duration: 4.5, // 稍微缩短动画周期
@@ -270,25 +322,7 @@ const VideoBackground = () => {
 
   return (
     <>
-      {/* 简化的标题区域 - 使用更轻量级的结构替代Welcome组件 */}
-      <div className='relative py-10 md:py-14'>
-        <div className='mx-auto max-w-5xl px-4 text-center'>
-          {/* 标题 */}
-          <h1 className='mb-4 text-3xl font-semibold text-gray-800 dark:text-gray-200 sm:text-4xl md:text-5xl'>
-            欢迎来到后花园庄
-          </h1>
-
-          {/* Heart 图标 */}
-          <Heart className='mx-auto mb-5 text-3xl text-emerald-500 dark:text-emerald-400' />
-
-          {/* 描述文字 */}
-          <p className='mx-auto max-w-2xl text-lg text-gray-600 dark:text-gray-400'>
-            传承千年茶韵，体验自然与传统的完美融合。在这里，您可以品味到最纯正的茶香，
-            感受大自然的宁静与美好。
-          </p>
-        </div>
-      </div>
-
+      <Welcome />
       <div className='relative w-full overflow-hidden px-4 lg:px-20'>
         {/* 简化装饰性背景元素动画 */}
         <motion.div
@@ -302,7 +336,6 @@ const VideoBackground = () => {
             repeat: Infinity,
             repeatType: 'reverse',
           }}
-          style={{ willChange: 'transform, opacity' }} // 告知浏览器提前优化
           aria-hidden='true'
         />
 
@@ -311,7 +344,6 @@ const VideoBackground = () => {
           style={{
             boxShadow:
               '0 20px 30px rgba(0, 0, 0, 0.07), 0 0 30px rgba(16, 185, 129, 0.15)',
-            willChange: 'transform', // 提示浏览器可能的变化
           }}
         >
           <div className='relative w-full overflow-hidden'>
