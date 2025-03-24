@@ -1,5 +1,5 @@
 import { motion, useAnimation } from 'framer-motion'
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 // 明确导入React
 import { useInView } from 'react-intersection-observer'
 
@@ -53,16 +53,6 @@ const calculateSize = () => {
   }
 }
 
-// 提前声明handleResize函数（在useEffect外部）
-const createResizeHandler = setSize => {
-  return function handleResize() {
-    // 使用requestAnimationFrame避免布局抖动
-    requestAnimationFrame(() => {
-      setSize(calculateSize())
-    })
-  }
-}
-
 // 使用memo优化组件
 const Heart = memo(() => {
   const [size, setSize] = useState(120) // 默认尺寸小一些
@@ -110,44 +100,44 @@ const Heart = memo(() => {
     checkPerformance()
   }, [])
 
-  // 使用防抖优化resize事件
+  // 使用useMemo缓存节流函数
+  const throttledResizeHandler = useMemo(() => {
+    return throttle(() => {
+      // 避免在回调内调用setState，使用函数式更新
+      setSize(calculateSize())
+    }, 200)
+  }, [])
+
+  // 优化ResizeObserver使用
   useEffect(() => {
-    // 使用ResizeObserver代替窗口resize事件
     if ('ResizeObserver' in window) {
       // 初始化大小
       setSize(calculateSize())
 
-      // 创建性能更高的ResizeObserver
-      const resizeObserver = new ResizeObserver(
-        throttle(() => {
-          requestAnimationFrame(() => {
-            setSize(calculateSize())
-          })
-        }, 200)
-      )
+      // 创建ResizeObserver
+      const resizeObserver = new ResizeObserver(() => {
+        // 使用requestAnimationFrame确保在下一帧渲染前更新
+        requestAnimationFrame(throttledResizeHandler)
+      })
 
       // 只观察根元素
       resizeObserver.observe(document.documentElement)
 
       return () => resizeObserver.disconnect()
     } else {
-      // 回退到原来的方法，但保持防抖
-      let resizeTimeout
-
-      // 使用前面声明的createResizeHandler函数来创建resize处理函数
-      const resizeHandler = createResizeHandler(setSize)
+      // 回退方案
+      const resizeHandler = () => {
+        requestAnimationFrame(throttledResizeHandler)
+      }
 
       window.addEventListener('resize', resizeHandler)
-      // 初始化大小
       setSize(calculateSize())
 
-      // 组件卸载时移除事件监听器和清除计时器
       return () => {
         window.removeEventListener('resize', resizeHandler)
-        clearTimeout(resizeTimeout)
       }
     }
-  }, [])
+  }, [throttledResizeHandler])
 
   return (
     <div className='flex items-center justify-center py-2' ref={ref}>

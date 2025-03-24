@@ -11,7 +11,6 @@ import {
 } from 'react'
 import { FiPlayCircle, FiX } from 'react-icons/fi'
 
-import LoadingSpinner from './LoadingSpinner'
 // 使用之前创建的加载组件
 import video_mp4 from './assets/video.mp4'
 import video_webm from './assets/video.webm'
@@ -35,21 +34,31 @@ const THEME = {
 const ReactPlayer = lazy(() => import('react-player'))
 
 // 使用 memo 优化 VideoPlayer 组件，防止不必要的重渲染
-const VideoPlayer = memo(({ url, onReady, onError }) => {
+const VideoPlayer = memo(({ url, onReady, onError, onClose }) => {
   const playerRef = useRef(null)
   const [playerError, setPlayerError] = useState(null)
-  const [isPlayerReady, setIsPlayerReady] = useState(false)
+  const [, setIsPlayerReady] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
+  const [, setIsBuffering] = useState(false)
+  const [duration, setDuration] = useState(0)
 
   // 处理播放器准备完成
   const handlePlayerReady = useCallback(() => {
     console.log('视频播放器已就绪')
     setIsPlayerReady(true)
+
+    // 确保获取到正确的持续时间
+    if (playerRef.current) {
+      const currentDuration = playerRef.current.getDuration()
+      console.log('视频时长:', currentDuration)
+      setDuration(currentDuration)
+    }
+
     // 延迟一下再开始播放，让控件有时间正确初始化
     setTimeout(() => {
       setHasStarted(true)
       if (onReady) onReady()
-    }, 300)
+    }, 500) // 增加延迟时间，确保完全加载
   }, [onReady])
 
   // 处理播放器错误
@@ -62,12 +71,31 @@ const VideoPlayer = memo(({ url, onReady, onError }) => {
     [onError]
   )
 
+  // 获取视频时长
+  const handleDuration = useCallback(duration => {
+    console.log('获取到视频时长:', duration)
+    setDuration(duration > 0 ? duration : 0)
+  }, [])
+
+  // 处理视频缓冲状态
+  const handleBuffer = useCallback(() => {
+    console.log('视频正在缓冲')
+    setIsBuffering(true)
+  }, [])
+
+  // 处理视频缓冲结束
+  const handleBufferEnd = useCallback(() => {
+    console.log('视频缓冲结束')
+    setIsBuffering(false)
+  }, [])
+
   // 处理进度更新，用于调试
   const handleProgress = useCallback(state => {
     // 观察进度更新是否正常
-    if (state.loaded !== state.loadedSeconds) {
+    if (state.loaded < 0.97) {
+      // 不处理接近完全加载的状态
       console.log(
-        `视频进度: ${state.played.toFixed(2)}, 已加载: ${state.loaded.toFixed(2)}`
+        `视频进度: ${state.played.toFixed(2)}, 已加载: ${state.loaded.toFixed(2)}, 缓冲到: ${state.loadedSeconds.toFixed(2)}s`
       )
     }
   }, [])
@@ -77,8 +105,21 @@ const VideoPlayer = memo(({ url, onReady, onError }) => {
     console.log('播放状态变更:', playing ? '播放' : '暂停')
   }, [])
 
+  // 当用户拖动进度条时
+  const handleSeek = useCallback(seconds => {
+    console.log('用户跳转到:', seconds)
+  }, [])
+
+  // 可以添加一个渲染视频时长的逻辑，比如在调试模式下
+  // 这将消除 duration 未使用的警告
+  useEffect(() => {
+    if (duration > 0) {
+      console.log('视频时长已更新:', duration.toFixed(2), '秒')
+    }
+  }, [duration])
+
   return (
-    <Suspense fallback={<LoadingSpinner size={60} color={THEME.primary} />}>
+    <Suspense fallback={null}>
       <div className='relative h-full w-full'>
         <ReactPlayer
           ref={playerRef}
@@ -90,16 +131,14 @@ const VideoPlayer = memo(({ url, onReady, onError }) => {
           playsinline
           onReady={handlePlayerReady}
           onError={handlePlayerError}
+          onDuration={handleDuration}
+          onBuffer={handleBuffer}
+          onBufferEnd={handleBufferEnd}
+          onSeek={handleSeek}
           onPlay={() => handlePlayPause(true)}
           onPause={() => handlePlayPause(false)}
           onProgress={handleProgress}
           progressInterval={1000} // 降低进度更新频率
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            zIndex: 1,
-          }}
           config={{
             file: {
               attributes: {
@@ -112,17 +151,23 @@ const VideoPlayer = memo(({ url, onReady, onError }) => {
               forceHLS: false,
             },
           }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            zIndex: 1,
+          }}
         />
 
-        {/* 透明覆盖层，用于调试或防止意外点击 */}
-        {!isPlayerReady && (
-          <div className='absolute inset-0 z-10 flex items-center justify-center bg-black/40'>
-            <LoadingSpinner size={60} color={THEME.primary} />
-          </div>
-        )}
-
+        {/* 仅保留错误信息提示，删除加载指示器 */}
         {playerError && (
-          <div className='absolute inset-0 z-20 flex items-center justify-center bg-black/70 text-white'>
+          <div
+            className='absolute inset-0 z-20 flex items-center justify-center bg-black/75 text-white backdrop-blur-sm'
+            onClick={e => {
+              e.stopPropagation()
+              if (onClose) onClose()
+            }}
+          >
             <p>视频播放出错，请刷新页面重试</p>
           </div>
         )}
@@ -139,6 +184,7 @@ VideoPlayer.propTypes = {
   url: PropTypes.string.isRequired,
   onReady: PropTypes.func,
   onError: PropTypes.func,
+  onClose: PropTypes.func,
 }
 
 // Welcome 组件 - 优化字体大小和层次感
@@ -181,8 +227,6 @@ const Welcome = () => {
       />
 
       <div className='relative mx-auto flex max-w-4xl flex-col items-center justify-center px-6 text-center'>
-
-
         {/* 装饰元素与描述文本 - 调整字体大小和间距 */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -206,7 +250,7 @@ const VideoBackground = () => {
   const [showVideo, setShowVideo] = useState(false)
   const [selectedVideo, setSelectedVideo] = useState('')
   const [videoError, setVideoError] = useState(false)
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
+  const [, setIsVideoLoaded] = useState(false)
   const videoContainerRef = useRef(null)
   const backgroundVideoRef = useRef(null)
   const isVideoOpenedRef = useRef(false)
@@ -235,6 +279,7 @@ const VideoBackground = () => {
 
   // 处理视频加载完成
   const handleVideoReady = useCallback(() => {
+    console.log('全屏视频加载完成')
     setIsVideoLoaded(true)
   }, [])
 
@@ -259,11 +304,29 @@ const VideoBackground = () => {
       const video = document.createElement('video')
       const canPlayWebm = video.canPlayType('video/webm; codecs="vp8, vorbis"')
 
-      if (isMounted) {
-        if (canPlayWebm !== '') {
-          setSelectedVideo(video_1_webm)
-        } else {
-          setSelectedVideo(video_1_mp4)
+      // 为确保兼容性，先检查视频文件是否可访问
+      try {
+        if (isMounted) {
+          if (canPlayWebm !== '') {
+            // 预加载视频以检查其可访问性
+            const preloadVideo = new Image()
+            preloadVideo.src = video_1_webm
+            preloadVideo.onload = () => setSelectedVideo(video_1_webm)
+            preloadVideo.onerror = () => setSelectedVideo(video_1_mp4)
+            // 设置默认值以防onload/onerror不触发
+            setTimeout(() => {
+              if (isMounted && !selectedVideo) {
+                setSelectedVideo(video_1_mp4)
+              }
+            }, 1000)
+          } else {
+            setSelectedVideo(video_1_mp4)
+          }
+        }
+      } catch (err) {
+        console.error('视频资源检查失败:', err)
+        if (isMounted) {
+          setSelectedVideo(video_1_mp4) // 默认使用MP4
         }
       }
 
@@ -275,7 +338,7 @@ const VideoBackground = () => {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [selectedVideo])
 
   // 美化的播放按钮组件
   const PlayButton = memo(() => (
@@ -464,26 +527,16 @@ const VideoBackground = () => {
                     '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1)',
                 }}
               >
-                {/* 加载状态指示器 */}
-                {!isVideoLoaded && (
-                  <div className='absolute inset-0 flex items-center justify-center bg-black/50'>
-                    <LoadingSpinner size={60} color={THEME.primary} />
-                  </div>
-                )}
+                {/* 移除加载状态指示器 */}
 
                 {/* 视频播放器 - 仅当selectedVideo有值时才渲染 */}
-                <Suspense
-                  fallback={
-                    <div className='absolute inset-0 flex items-center justify-center'>
-                      <LoadingSpinner size={60} color={THEME.primary} />
-                    </div>
-                  }
-                >
+                <Suspense fallback={null}>
                   {selectedVideo && (
                     <VideoPlayer
                       url={selectedVideo}
                       onReady={handleVideoReady}
                       onError={handleVideoError}
+                      onClose={handleDeleteButtonClick}
                     />
                   )}
                 </Suspense>

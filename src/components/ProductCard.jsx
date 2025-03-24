@@ -1,53 +1,25 @@
 import { Tooltip } from '@nextui-org/react'
-import { motion } from 'framer-motion'
 import PropTypes from 'prop-types'
+import React from 'react'
 import { FaShoppingCart } from 'react-icons/fa'
 
 import OptimizedImage from './OptimizedImage'
 
 // 可复用的产品卡片组件，支持不同的显示模式
-const ProductCard = ({
-  product,
-  variant = 'full', // 'full', 'compact', 'preview'
-  delay = 0,
-  theme = 'light',
-}) => {
-  // 基础卡片动画
-  const cardAnimation =
-    variant === 'preview'
-      ? {
-          initial: { opacity: 0, y: 20 },
-          whileInView: { opacity: 1, y: 0 },
-          viewport: { once: true },
-          transition: { duration: 0.5, delay: delay * 0.1 },
-        }
-      : {}
-
-  // 悬停动画效果
-  const hoverAnimation = {
-    whileHover: {
-      y: -8,
-      boxShadow:
-        theme === 'dark'
-          ? '0 20px 25px -5px rgba(16, 185, 129, 0.15)'
-          : '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-      transition: { duration: 0.3 },
-    },
-  }
-
+const ProductCard = ({ product, variant = 'full' }) => {
   return (
-    <motion.div
+    <div
       className={`group overflow-hidden rounded-xl border border-gray-200 bg-white/95 shadow-lg transition-all dark:border-gray-700 dark:bg-gray-800/90 ${
         variant === 'compact' ? 'h-full' : ''
       }`}
-      {...cardAnimation}
-      {...hoverAnimation}
     >
       <div
         className={`relative ${variant === 'compact' ? 'h-44' : 'h-56'} overflow-hidden bg-gray-100 dark:bg-gray-700`}
       >
         <OptimizedImage
           src={product.image}
+          avifSrc={product.avifImage}
+          webpSrc={product.webpImage}
           alt={product.name}
           className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'
           sizes={
@@ -55,7 +27,7 @@ const ProductCard = ({
               ? '(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 25vw'
               : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
           }
-          priority={delay === 0} // 首个产品优先加载
+          loading='lazy'
         />
         <div className='absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100'></div>
       </div>
@@ -98,13 +70,15 @@ const ProductCard = ({
           </Tooltip>
         </div>
       )}
-    </motion.div>
+    </div>
   )
 }
 
 ProductCard.propTypes = {
   product: PropTypes.shape({
     image: PropTypes.string.isRequired,
+    avifImage: PropTypes.string, // 添加avifImage验证
+    webpImage: PropTypes.string, // 添加webpImage验证
     name: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
     category: PropTypes.string.isRequired,
@@ -112,7 +86,7 @@ ProductCard.propTypes = {
   }).isRequired,
   variant: PropTypes.oneOf(['full', 'compact', 'preview']),
   delay: PropTypes.number,
-  theme: PropTypes.string,
 }
 
-export default ProductCard
+// 使用React.memo包装组件，避免不必要的重新渲染
+export default React.memo(ProductCard)

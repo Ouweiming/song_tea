@@ -1,38 +1,61 @@
 import { motion } from 'framer-motion'
-import { useInView } from 'react-intersection-observer'
 import PropTypes from 'prop-types'
+import { useRef } from 'react'
+import { useInView } from 'react-intersection-observer'
 
 const AnimatedBlock = ({ delay = 0, direction = 'left', content }) => {
-  const { ref, inView } = useInView({
-    triggerOnce: true,
-    threshold: 0.5,
+  // 创建ref用于监听
+  const ref = useRef(null)
+  // 使用 useInView 钩子代替手动的 IntersectionObserver，减少自定义逻辑
+  const [inViewRef, inView] = useInView({
+    triggerOnce: true, // 只触发一次动画，减少无谓的重复计算
+    threshold: 0.1, // 当元素 10% 进入视口时触发
+    rootMargin: '-50px 0px', // 提前 50px 触发
   })
 
+  // 使用函数式ref合并两个ref
+  const setRefs = node => {
+    ref.current = node
+    inViewRef(node)
+  }
+
+  // 预计算动画属性，而不是在渲染时动态计算
   const xInitial = direction === 'left' ? -30 : 30
   const xEnd = 0
 
+  // 定义animationConfig，避免函数组件内部生成新对象
   const animationConfig = {
     initial: { opacity: 0, x: xInitial, scale: 0.9 },
-    animate: {
-      opacity: inView ? 1 : 0,
-      x: inView ? xEnd : xInitial,
-      scale: inView ? 1.05 : 0.9,
+    animate: inView
+      ? {
+          opacity: 1,
+          x: xEnd,
+          scale: 1.05,
+        }
+      : {
+          opacity: 0,
+          x: xInitial,
+          scale: 0.9,
+        },
+    transition: {
+      duration: 0.6,
+      delay,
+      ease: 'easeOut',
     },
-    transition: { duration: 0.6, delay, ease: 'easeOut' },
+    whileHover: {
+      scale: 1.1,
+      transition: {
+        type: 'spring',
+        stiffness: 200,
+        damping: 50,
+      },
+    },
   }
 
   return (
-    <div ref={ref} className='flex w-full items-center justify-center py-8'>
+    <div ref={setRefs} className='flex w-full items-center justify-center py-8'>
       <motion.div
         {...animationConfig}
-        whileHover={{
-          scale: 1.1,
-          transition: {
-            type: 'spring',
-            stiffness: 200,
-            damping: 50,
-          },
-        }}
         className='flex w-full max-w-xs flex-col items-center justify-center rounded-lg bg-white bg-opacity-90 p-4 shadow-lg dark:bg-gray-300 sm:max-w-sm sm:flex-row sm:p-6 md:max-w-md md:p-8 lg:max-w-lg xl:max-w-xl 2xl:max-w-5xl'
       >
         <div className='flex flex-col items-center justify-center overflow-hidden'>
@@ -53,15 +76,15 @@ AnimatedBlock.propTypes = {
   direction: PropTypes.string,
   content: PropTypes.shape({
     title: PropTypes.string.isRequired,
-    paragraph: PropTypes.string.isRequired
-  }).isRequired
+    paragraph: PropTypes.string.isRequired,
+  }).isRequired,
 }
 
 const Block = () => {
   const content1 = {
     title: '产品类型：',
     paragraph:
-      '主打产品系列（玉兰香、芝兰香、翠玉香、密兰香，不同香型的“宋茶单丛”）衍生产品系列（茶宠盲盒、IP周边原创）',
+      '主打产品系列（玉兰香、芝兰香、翠玉香、密兰香，不同香型的"宋茶单丛"）衍生产品系列（茶宠盲盒、IP周边原创）',
   }
 
   const content2 = {

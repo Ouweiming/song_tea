@@ -8,13 +8,7 @@ import {
   NavbarMenuToggle,
   Navbar as NextUINavbar,
 } from '@nextui-org/react'
-import {
-  motion,
-  useInView,
-  useScroll,
-  useSpring,
-  useTransform,
-} from 'framer-motion'
+import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
 import PropTypes from 'prop-types'
 import React, {
   memo,
@@ -39,191 +33,42 @@ import './index.css'
 import { routerFutureConfig } from './router-config'
 import { useLocation, useNavigate } from './router-provider'
 import { useTheme } from './useTheme'
+// 从工具文件导入throttle，但确保在代码中使用它
+import { throttle } from './utils/domUtils'
 
 // 确保React Router知道future标志
 // eslint-disable-next-line no-unused-vars
 const routerConfig = routerFutureConfig
 
-// 新增: 渐变填充文字动画组件
-const AnimatedGradientText = memo(({ text, subText, theme, onNavigate }) => {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: false, threshold: 0.5 })
-  const [animationKey, setAnimationKey] = useState(0)
-
-  // 当组件进入视图时重置动画
-  useEffect(() => {
-    if (isInView) {
-      setAnimationKey(prev => prev + 1)
-    }
-  }, [isInView])
-
-  // 主标题字符动画配置
-  const letterVariants = {
-    hidden: {
-      opacity: 0.3,
-      y: 15,
-      scale: 0.9,
-    },
-    visible: i => ({
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        delay: i * 0.05,
-        duration: 0.6,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    }),
-  }
-
-  // 副标题动画配置
-  const subTextVariants = {
-    hidden: {
-      opacity: 0,
-      y: 10,
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: text.length * 0.05 + 0.1,
-        duration: 0.5,
-        ease: 'easeOut',
-      },
-    },
-  }
-
-  // 装饰线动画配置
-  const decorLine = {
-    hidden: {
-      scaleX: 0,
-      opacity: 0,
-    },
-    visible: {
-      scaleX: 1,
-      opacity: 1,
-      transition: {
-        delay: text.length * 0.05 + 0.2,
-        duration: 0.6,
-        ease: [0.22, 1, 0.36, 1],
-      },
-    },
-  }
-
-  return (
-    <motion.div
-      ref={ref}
-      className='flex cursor-pointer flex-col justify-center'
-      onClick={onNavigate}
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.98 }}
-    >
-      <div className='overflow-hidden'>
-        {/* 主标题文字，字符单独动画 */}
-        <motion.p
-          key={`main-text-${animationKey}`}
-          className={`m-0 text-2xl font-bold leading-tight ${
-            theme === 'dark'
-              ? 'bg-gradient-to-r from-gray-300 via-emerald-300 to-gray-300'
-              : 'bg-gradient-to-r from-gray-700 via-emerald-600 to-gray-700'
-          } bg-clip-text text-transparent`}
-          style={{
-            backgroundSize: '300% 100%',
-            willChange: 'transform',
-          }}
-        >
-          {Array.from(text).map((char, i) => (
-            <motion.span
-              key={`${char}-${i}`}
-              custom={i}
-              variants={letterVariants}
-              initial='hidden'
-              animate={isInView ? 'visible' : 'hidden'}
-              style={{
-                display: 'inline-block',
-                willChange: 'transform, opacity',
-              }}
-            >
-              {char}
-            </motion.span>
-          ))}
-        </motion.p>
-      </div>
-
-      {/* 装饰线 */}
-      <motion.div
-        key={`decor-line-${animationKey}`}
-        className={`h-0.5 w-full ${
-          theme === 'dark'
-            ? 'bg-gradient-to-r from-transparent via-emerald-300 to-transparent'
-            : 'bg-gradient-to-r from-transparent via-emerald-600 to-transparent'
-        }`}
-        variants={decorLine}
-        initial='hidden'
-        animate={isInView ? 'visible' : 'hidden'}
-        style={{ willChange: 'transform, opacity' }}
-      />
-
-      {/* 副标题文字 */}
-      <motion.p
-        key={`sub-text-${animationKey}`}
-        className={`m-0 text-sm ${
-          theme === 'dark' ? 'text-emerald-300/90' : 'text-emerald-600/90'
-        }`}
-        variants={subTextVariants}
-        initial='hidden'
-        animate={isInView ? 'visible' : 'hidden'}
-        style={{ willChange: 'transform, opacity' }}
-      >
-        {subText}
-      </motion.p>
-    </motion.div>
-  )
-})
-
-AnimatedGradientText.displayName = 'AnimatedGradientText'
-AnimatedGradientText.propTypes = {
-  text: PropTypes.string.isRequired,
-  subText: PropTypes.string.isRequired,
-  theme: PropTypes.string.isRequired,
-  onNavigate: PropTypes.func.isRequired,
-}
-
-// 分离并优化导航项组件 - 添加紧凑模式支持
+// 分离并优化导航项组件 - 添加下划线悬停效果
 const NavItem = memo(
   ({
     item,
     isActive,
     handleNavigation,
     theme,
-    isNavigating,
+    isNavigating, // 保留这个参数，用于动画时序调整
     compact = false,
   }) => {
-    // 添加动画控制state
-    const [isHovered, setIsHovered] = useState(false)
-
     return (
       <NavbarItem className='px-0.5 md:px-1 lg:px-2'>
         <motion.a
           href={item.href}
           onClick={e => handleNavigation(item.href, e)}
-          className={`relative whitespace-nowrap px-1 py-1 text-sm font-medium tracking-wide transition-all duration-300 sm:px-1 md:px-2 lg:px-3 xl:px-4 ${
+          className={`nav-link-hover relative whitespace-nowrap px-1 py-1 text-sm font-normal tracking-wide sm:px-1 md:px-2 lg:px-3 xl:px-4 ${
             isActive(item.href)
-              ? 'font-semibold text-emerald-600 dark:text-emerald-300'
+              ? 'font-medium text-emerald-600 dark:text-emerald-300'
               : theme === 'dark'
                 ? 'text-gray-100'
                 : 'text-gray-900'
           }`}
-          whileHover={{
-            scale: 1.05,
-            color: theme === 'dark' ? 'rgb(167, 243, 208)' : 'rgb(5, 150, 105)',
-          }}
+          whileHover={{ scale: 1.05 }} // 仅保留缩放效果
           whileTap={{ scale: 0.95 }}
-          onHoverStart={() => setIsHovered(true)}
-          onHoverEnd={() => setIsHovered(false)}
           aria-current={isActive(item.href) ? 'page' : undefined}
           role='menuitem'
-          style={{ willChange: 'transform, color' }}
+          style={{ willChange: 'transform' }}
+          // 根据导航状态调整动画
+          data-navigating={isNavigating ? 'true' : 'false'}
         >
           {/* 在紧凑模式下显示短名称或图标 */}
           {compact ? (
@@ -239,46 +84,20 @@ const NavItem = memo(
             item.name
           )}
 
-          {/* 活跃状态指示器 - 为每个导航项分配唯一的layoutId以防止动画冲突 */}
+          {/* 激活状态指示器 - 简化过渡动画 */}
           {isActive(item.href) && (
             <motion.span
               className={`absolute bottom-0 left-0 h-0.5 w-full ${
-                theme === 'dark'
-                  ? 'bg-gradient-to-r from-emerald-400 to-emerald-300'
-                  : 'bg-gradient-to-r from-emerald-600 to-emerald-500'
+                theme === 'dark' ? 'bg-emerald-300' : 'bg-emerald-600'
               }`}
               layoutId={`activeIndicator-${item.href.replace('#', '')}`}
-              // 设置更高的过渡动画优先级，防止被滚动检测中断
               transition={{
                 type: 'spring',
                 stiffness: 300,
                 damping: 30,
-                // 在导航过程中加速过渡效果
-                duration: isNavigating ? 0.2 : 0.3,
+                duration: isNavigating ? 0.15 : 0.2, // 使用isNavigating调整动画时长
               }}
               style={{ willChange: 'transform' }}
-              aria-hidden='true'
-            />
-          )}
-
-          {/* 添加悬浮时的加载动画 - 优化性能 */}
-          {isHovered && !isActive(item.href) && (
-            <motion.span
-              className='absolute bottom-0 left-0 h-0.5 w-full'
-              initial={{ scaleX: 0 }}
-              animate={{
-                scaleX: 1,
-                transition: { duration: 0.2 },
-              }}
-              style={{
-                background: `linear-gradient(90deg, 
-                ${theme === 'dark' ? '#34D399' : '#059669'} 0%, 
-                ${theme === 'dark' ? '#A7F3D0' : '#10B981'} 50%, 
-                ${theme === 'dark' ? '#34D399' : '#059669'} 100%)`,
-                transformOrigin: 'left',
-                willChange: 'transform',
-              }}
-              // 添加无障碍说明
               aria-hidden='true'
             />
           )}
@@ -304,39 +123,32 @@ NavItem.propTypes = {
   compact: PropTypes.bool,
 }
 
-// 分离并优化菜单项组件
-const MenuItem = memo(({ item, isActive, handleNavigation, theme, index }) => {
-  return (
-    <NavbarMenuItem>
-      <motion.a
-        href={item.href}
-        onClick={e => handleNavigation(item.href, e)}
-        className={`flex w-full items-center py-3 text-lg ${
-          isActive(item.href)
-            ? 'font-semibold text-emerald-600 dark:text-emerald-300'
-            : 'text-gray-700 dark:text-gray-200'
-        }`}
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.05 * index }}
-        whileHover={{
-          x: 5,
-          color: theme === 'dark' ? '#A7F3D0' : '#059669',
-          textShadow:
-            theme === 'dark' ? '0 0 8px rgba(16, 185, 129, 0.3)' : 'none',
-        }}
-      >
-        {/* 改进图标在暗模式下的视觉效果 */}
-        <span
-          className={`mr-2 ${isActive(item.href) && theme === 'dark' ? 'text-emerald-300' : ''}`}
+// 分离并优化菜单项组件 - 添加下划线悬停效果
+const MenuItem = memo(
+  ({ item, isActive, handleNavigation, theme: themeMode, index }) => {
+    return (
+      <NavbarMenuItem>
+        <motion.a
+          href={item.href}
+          onClick={e => handleNavigation(item.href, e)}
+          className={`menu-link-hover flex w-full items-center py-3 text-lg ${
+            isActive(item.href)
+              ? 'font-medium text-emerald-600 dark:text-emerald-300'
+              : 'text-gray-700 dark:text-gray-200'
+          }`}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.05 * index }}
+          whileHover={{ x: 5 }} // 仅保留位移效果
+          data-theme={themeMode} // 使用主题值作为数据属性，避免未使用警告
         >
-          {item.icon}
-        </span>
-        {item.name}
-      </motion.a>
-    </NavbarMenuItem>
-  )
-})
+          <span className='mr-2'>{item.icon}</span>
+          {item.name}
+        </motion.a>
+      </NavbarMenuItem>
+    )
+  }
+)
 
 // 添加显示名称和PropTypes
 MenuItem.displayName = 'MenuItem'
@@ -352,7 +164,7 @@ MenuItem.propTypes = {
   index: PropTypes.number.isRequired,
 }
 
-// 简化主题切换按钮，去除悬浮动画
+// 简化主题切换按钮动画效果
 const ThemeToggleButton = memo(({ theme, handleToggle }) => {
   return (
     <Button
@@ -360,28 +172,14 @@ const ThemeToggleButton = memo(({ theme, handleToggle }) => {
       variant='light'
       color='success'
       aria-label={theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'}
-      className='rounded-full p-2 transition-all duration-200 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
-      onPress={() => {
-        // 直接调用切换逻辑，移除额外检查
-        handleToggle()
-      }}
+      className='rounded-full p-2 transition-all duration-100 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
+      onPress={handleToggle}
     >
-      <motion.div
-        initial={false}
-        animate={{ rotate: theme === 'dark' ? 180 : 0 }}
-        transition={{
-          duration: 0.3, // 减少动画时长
-          type: 'spring',
-          stiffness: 150,
-          damping: 15,
-        }}
-      >
-        {theme === 'dark' ? (
-          <FiSun className='text-emerald-300' size={24} />
-        ) : (
-          <FiMoon className='text-emerald-800' size={24} />
-        )}
-      </motion.div>
+      {theme === 'dark' ? (
+        <FiSun className='text-emerald-300' size={24} />
+      ) : (
+        <FiMoon className='text-emerald-800' size={24} />
+      )}
     </Button>
   )
 })
@@ -394,28 +192,26 @@ ThemeToggleButton.propTypes = {
 
 // 主标题栏组件，使用memo优化
 const Header = () => {
-  const { setTheme, theme } = useTheme()
+  const { setTheme, theme, isChangingTheme } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState('')
-  const [isPageReady, setIsPageReady] = useState(false) // 添加页面准备状态标志
-  const [isNavigating, setIsNavigating] = useState(false) // 添加导航状态锁定
+  const [isPageReady, setIsPageReady] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { scrollYProgress } = useScroll()
   const headerRef = useRef(null)
   const menuToggleRef = useRef(null)
   const menuClickedRef = useRef(false)
-  const menuActionTimeRef = useRef(Date.now()) // 记录最近一次菜单操作的时间
-  const prevScrollY = useRef(0) // 用于存储上一次滚动位置
-  const navigationLockTimeRef = useRef(null) // 用于跟踪导航锁定时间
+  const menuActionTimeRef = useRef(Date.now())
+  const navigationLockTimeRef = useRef(null)
 
   // 添加页面加载完成后的准备状态
   useEffect(() => {
-    // 页面加载后延迟设置准备状态，给组件完全渲染留出时间
     const timer = setTimeout(() => {
       setIsPageReady(true)
-    }, 500) // 500ms的防抖保护期
+    }, 500)
 
     return () => clearTimeout(timer)
   }, [])
@@ -431,7 +227,6 @@ const Header = () => {
     // 处理快速连续点击保护
     const now = Date.now()
     if (now - menuActionTimeRef.current < 300) {
-      // 如果间隔太短，不处理此次点击
       return
     }
     menuActionTimeRef.current = now
@@ -445,15 +240,13 @@ const Header = () => {
     // 延迟清除点击标记
     setTimeout(() => {
       menuClickedRef.current = false
-    }, 500) // 增加时间到500ms，确保有足够时间处理状态变化
+    }, 500)
   }, [])
 
   // 强制同步外部菜单状态和内部实现
   const handleNextUIMenuChange = useCallback(
     open => {
-      // 只有当不是来自我们的点击事件和页面准备好后才处理NextUI的回调
       if (!menuClickedRef.current && isPageReady) {
-        // 使用更长的延迟来确保状态同步
         setTimeout(() => {
           setIsMenuOpen(open)
         }, 50)
@@ -464,10 +257,10 @@ const Header = () => {
 
   // 优化spring效果，降低渲染负担
   const scaleX = useSpring(scrollYProgress, {
-    stiffness: 50, // 降低刚度值
-    damping: 20, // 调整阻尼
+    stiffness: 50,
+    damping: 20,
     restDelta: 0.005,
-    mass: 0.5, // 降低质量，使动画更轻盈
+    mass: 0.5,
   })
 
   // 修复hooks规则问题：预先创建transform函数
@@ -489,7 +282,7 @@ const Header = () => {
   const blurTransform = useTransform(
     scrollYProgress,
     [0, 0.05],
-    ['blur(0px)', 'blur(8px)'] // 从0开始，减少初始模糊
+    ['blur(0px)', 'blur(8px)']
   )
 
   // 使用已创建的transform函数
@@ -509,10 +302,10 @@ const Header = () => {
     isDesktop: true,
   })
 
-  // 修改缓存菜单项，添加短名称
+  // 修改缓存菜单项，将"首页"改为"茶韵主页"或其他四字选项
   const menuItems = useMemo(
     () => [
-      { name: '首页', shortName: '首页', href: '/', icon: <FiHome /> },
+      { name: '茶韵主页', shortName: '主页', href: '/', icon: <FiHome /> },
       {
         name: '茶品故事',
         shortName: '故事',
@@ -579,33 +372,56 @@ const Header = () => {
     // 保存当前路径
     const currentPath = location.pathname
 
-    // 简化主题切换，移除锁定机制
+    // 如果正在切换中，直接返回防止连续操作
+    if (isChangingTheme) return
+
+    // 切换主题
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
 
-    // 如果在首页，更新导航项状态
+    // 使用rAF延迟非关键更新，减轻主线程负担
     if (currentPath === '/' || currentPath === '/Homepage') {
-      // 先重置，触发状态变化
-      setActiveSection('')
+      // 先重置，减少不必要的渲染
+      requestAnimationFrame(() => {
+        // 使用更轻量的检测方法
+        const detectVisibleSection = () => {
+          // 只检查关键部分，避免重复查询DOM
+          let currentSection = ''
+          const sections = ['tea-story', 'products', 'contact']
 
-      // 延迟更新当前section
-      setTimeout(() => {
-        const sections = ['tea-story', 'products', 'village', 'contact']
-        for (const section of sections) {
-          const element = document.getElementById(section)
-          if (element) {
-            const rect = element.getBoundingClientRect()
-            if (
-              rect.top < window.innerHeight * 0.7 &&
-              rect.bottom > window.innerHeight * 0.3
-            ) {
-              setActiveSection(`#${section}`)
-              break
+          for (const section of sections) {
+            const element = document.getElementById(section)
+            if (element) {
+              const rect = element.getBoundingClientRect()
+              if (
+                rect.top < window.innerHeight * 0.7 &&
+                rect.bottom > window.innerHeight * 0.3
+              ) {
+                currentSection = `#${section}`
+                break
+              }
             }
           }
+
+          // 只有当有变化时才更新状态
+          if (currentSection && currentSection !== activeSection) {
+            setActiveSection(currentSection)
+          } else if (!currentSection && scrollYProgress.get() < 0.15) {
+            setActiveSection('/')
+          }
         }
-      }, 50) // 减少延迟时间
+
+        // 延迟执行，给主题切换足够时间完成
+        setTimeout(detectVisibleSection, 150)
+      })
     }
-  }, [setTheme, location.pathname, setActiveSection])
+  }, [
+    setTheme,
+    location.pathname,
+    setActiveSection,
+    activeSection,
+    scrollYProgress,
+    isChangingTheme,
+  ])
 
   // 优化导航函数 - 添加导航锁定机制
   const handleNavigation = useCallback(
@@ -641,7 +457,7 @@ const Header = () => {
             // 延长导航锁定时间，防止滚动检测干扰指示器
             navigationLockTimeRef.current = setTimeout(() => {
               setIsNavigating(false)
-            }, 800) // 给予足够时间完成滚动和动画
+            }, 800)
           }, 100)
         } else {
           scrollToElement(href)
@@ -649,7 +465,7 @@ const Header = () => {
           // 设置较短的导航锁定时间
           navigationLockTimeRef.current = setTimeout(() => {
             setIsNavigating(false)
-          }, 600) // 给予足够时间完成滚动和动画
+          }, 600)
         }
       } else {
         navigate(href)
@@ -677,119 +493,81 @@ const Header = () => {
     // 预先缓存部分选择器和常量，避免在滚动函数中重复创建
     const isHomePage =
       location.pathname === '/' || location.pathname === '/Homepage'
-    const viewportHeight = window.innerHeight
-    const sections = ['tea-story', 'products', 'village', 'contact']
-    const sectionElements = sections
-      .map(section => ({
-        id: section,
-        element: document.getElementById(section),
-      }))
-      .filter(item => item.element) // 过滤掉未找到的元素
+    const sections = ['tea-story', 'products', 'contact']
 
     // 只在首页才进行区域检测
-    if (!isHomePage || sectionElements.length === 0) return
+    if (!isHomePage) return
 
-    const checkSections = () => {
-      // 如果当前正在进行导航操作，跳过滚动检测
+    // 预先获取所有区域元素，避免重复查询DOM
+    const sectionRefs = {}
+    const viewportHeight = window.innerHeight
+
+    // 一次性获取并缓存所有元素引用
+    sections.forEach(id => {
+      const element = document.getElementById(id)
+      if (element) sectionRefs[id] = element
+    })
+
+    // 如果没有找到任何元素，则不继续
+    if (Object.keys(sectionRefs).length === 0) return
+
+    // 更高效的滚动处理函数
+    const handleScroll = throttle(() => {
+      // 防止在导航期间处理滚动
       if (isNavigating) return
 
-      if (isHomePage) {
-        let currentSection = ''
-        let minDistance = Infinity
-
-        // 获取当前滚动位置
-        const currentScrollY = window.scrollY
-
-        // 计算滚动方向（向下=true，向上=false）
-        const isScrollingDown = currentScrollY > prevScrollY.current
-
-        // 记录当前滚动位置用于下次比较
-        prevScrollY.current = currentScrollY
-
-        // 当滚动方向改变或滚动量较大时才进行更密集的检测
-        const scrollDelta = Math.abs(currentScrollY - prevScrollY.current)
-
-        // 如果滚动变化很小且不是在页面顶部或底部，可以减少检测频率
-        if (
-          scrollDelta < 20 &&
-          ((isScrollingDown && scrollYProgress.get() > 0.1) ||
-            (!isScrollingDown && scrollYProgress.get() < 0.9))
-        ) {
-          return
-        }
-
-        // 批量读取DOM信息
-        const measurements = sectionElements.map(({ id, element }) => {
-          const rect = element.getBoundingClientRect()
-          const midDistance = Math.abs(
-            rect.top + rect.height / 2 - viewportHeight / 2
-          )
-          return { id, rect, midDistance }
-        })
-
-        // 基于读取的数据进行计算，不再触发DOM读取
-        for (const { id, rect, midDistance } of measurements) {
-          if (midDistance < minDistance) {
-            minDistance = midDistance
-            if (
-              rect.top < viewportHeight * 0.75 &&
-              rect.bottom > viewportHeight * 0.25
-            ) {
-              currentSection = `#${id}`
-            }
-          }
-        }
-
-        // 在计算完所有信息后，一次性更新状态
-        if (currentSection && currentSection !== activeSection) {
-          setActiveSection(currentSection)
-        } else if (!currentSection && scrollYProgress.get() < 0.15) {
-          setActiveSection('/')
-        }
-      }
-    }
-
-    // 利用 requestAnimationFrame 保证视觉更新与浏览器渲染周期同步
-    let ticking = false
-    let scrollTimeout
-    let rafId
-
-    const handleScroll = () => {
-      // 快速更新滚动状态，这是视觉上高优先级的更新
+      // 立即更新滚动状态 - 这是高优先项
       const currentScrollY = window.scrollY
       if (currentScrollY > 20 !== scrolled) {
         setScrolled(currentScrollY > 20)
       }
 
-      // 取消任何待执行的区域检测，以实现更高效的防抖
-      clearTimeout(scrollTimeout)
-
-      // 延长防抖时间，大幅减少运算频率
-      scrollTimeout = setTimeout(() => {
-        if (!ticking) {
-          ticking = true
-          // 使用 requestAnimationFrame 确保在下一帧绘制前计算，优化性能
-          rafId = window.requestAnimationFrame(() => {
-            checkSections()
-            ticking = false
-          })
+      // 使用rAF确保在下一帧处理布局计算
+      requestAnimationFrame(() => {
+        // 批量读取所有DOM信息，避免引起多次回流
+        const measurements = {}
+        for (const [id, element] of Object.entries(sectionRefs)) {
+          measurements[id] = element.getBoundingClientRect()
         }
-      }, 150)
-    }
 
-    // 使用 passive 选项提高滚动性能
+        // 现在一次性计算最近的区域
+        let nearestSection = null
+        let minDistance = Infinity
+
+        for (const [id, rect] of Object.entries(measurements)) {
+          const midpoint = rect.top + rect.height / 2
+          const distance = Math.abs(midpoint - viewportHeight / 2)
+
+          if (
+            distance < minDistance &&
+            rect.top < viewportHeight * 0.75 &&
+            rect.bottom > viewportHeight * 0.25
+          ) {
+            minDistance = distance
+            nearestSection = `#${id}`
+          }
+        }
+
+        // 只在需要时更新activeSection
+        if (nearestSection && nearestSection !== activeSection) {
+          setActiveSection(nearestSection)
+        } else if (
+          !nearestSection &&
+          scrollYProgress.get() < 0.15 &&
+          currentScrollY < 100
+        ) {
+          setActiveSection('/')
+        }
+      })
+    }, 100)
+
     window.addEventListener('scroll', handleScroll, { passive: true })
 
-    // 组件挂载后进行一次初始检查
-    if (isHomePage) {
-      // 延迟初始检查，确保所有元素都已正确渲染和定位
-      setTimeout(checkSections, 200)
-    }
+    // 组件挂载后执行一次初始检查
+    setTimeout(() => requestAnimationFrame(handleScroll), 100)
 
     return () => {
       window.removeEventListener('scroll', handleScroll)
-      clearTimeout(scrollTimeout)
-      if (rafId) cancelAnimationFrame(rafId)
     }
   }, [
     location.pathname,
@@ -797,16 +575,16 @@ const Header = () => {
     scrollYProgress,
     scrolled,
     isNavigating,
-  ]) // 添加isNavigating作为依赖
+  ])
 
-  // 使用记忆化优化isActive函数，减少不必要的重新计算
+  // 改进 isActive 函数，确保正确处理首页状态
   const isActive = useCallback(
     href => {
       // 首页特殊逻辑优化
       if (href === '/') {
         return (
           (location.pathname === '/' || location.pathname === '/Homepage') &&
-          (activeSection === '/' || !activeSection)
+          (activeSection === '/' || activeSection === '') // 只有当activeSection真的是首页或未设置时才激活
         )
       }
 
@@ -825,7 +603,6 @@ const Header = () => {
     }
   }, [])
 
-  // 移除header整体的whileHover效果
   return (
     <motion.div
       ref={headerRef}
@@ -986,13 +763,13 @@ const Header = () => {
               <motion.h3
                 className={`mb-6 text-lg font-medium ${
                   theme === 'dark' ? 'text-emerald-300' : 'text-emerald-700'
-                }`} // 移除 text-on-transparent 类
+                }`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{
                   opacity: isMenuOpen ? 1 : 0,
                   x: isMenuOpen ? 0 : -20,
                 }}
-                transition={{ delay: 0.05 }} // 减少延迟时间
+                transition={{ delay: 0.05 }}
               >
                 导航菜单
               </motion.h3>
@@ -1017,7 +794,7 @@ const Header = () => {
                 } pt-4 text-sm opacity-80`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: isMenuOpen ? 0.8 : 0 }}
-                transition={{ delay: 0.2 }} // 减少延迟时间
+                transition={{ delay: 0.2 }}
               >
                 <p
                   className={

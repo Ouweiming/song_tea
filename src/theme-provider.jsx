@@ -1,27 +1,24 @@
 import PropTypes from 'prop-types'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ThemeProviderContext } from './theme-context'
 
-// 批量更新DOM，减少重排
-const updateThemeClasses = (root, oldTheme, newTheme) => {
-  // 一次性移除所有主题类，避免类累积
+// 优化DOM批量更新，减少重排
+const updateThemeClasses = (root, newTheme) => {
+  // 移除所有主题类
   root.classList.remove('light', 'dark')
 
-  // 强制重新计算样式，解决持久化样式问题
-  // eslint-disable-next-line no-unused-expressions
-  window.getComputedStyle(root).backgroundColor
-
-  // 应用新类
+  // 应用新主题 - 不再强制重新计算样式
   if (newTheme === 'system') {
     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
       .matches
       ? 'dark'
       : 'light'
     root.classList.add(systemTheme)
+    return systemTheme
   } else {
-    // 应用新主题
     root.classList.add(newTheme)
+    return newTheme
   }
 }
 
@@ -31,82 +28,123 @@ export function ThemeProvider({
   storageKey = 'vite-ui-theme',
   ...props
 }) {
+  // 使用ref缓存上一个主题
+  const prevThemeRef = useRef(null)
   const [theme, setThemeState] = useState(() => {
     return localStorage.getItem(storageKey) || defaultTheme
   })
 
-  // 优化主题变更处理，避免组件树频繁重渲染
+  // 添加禁止动画状态
+  const [disableTransitions, setDisableTransitions] = useState(false)
+  const timeoutRef = useRef(null)
+
+  // 优化主题变更处理，使用更高效的DOM操作
   useEffect(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+
     const root = window.document.documentElement
 
-    // 删除空格-这只需要做一次
-    const updatedTheme = theme.replace(/\s/g, '')
+    // 只有当主题真正改变时才执行
+    if (prevThemeRef.current !== theme) {
+      // 清除任何空格
+      const updatedTheme = theme.replace(/\s/g, '')
 
-    // 暂停过渡效果，避免中间状态
-    root.style.transition = 'none'
+      // 临时禁用所有CSS过渡
+      setDisableTransitions(true)
+      root.setAttribute('data-theme-switching', 'true')
 
-    // 标记主题切换状态，帮助CSS选择器识别切换过程
-    root.setAttribute('data-theme-switching', 'true')
-
-    // 使用requestAnimationFrame确保DOM批量更新
-    requestAnimationFrame(() => {
-      updateThemeClasses(root, null, updatedTheme)
-
-      // 确保更新已应用后再恢复过渡
+      // 使用单一rAF调用进行批处理
       requestAnimationFrame(() => {
-        // 恢复过渡效果
-        root.style.transition = ''
+        // 更新类并获取实际应用的主题
+        const appliedTheme = updateThemeClasses(root, updatedTheme)
 
-        // 移除切换状态标记
-        root.removeAttribute('data-theme-switching')
+        // 使用较短的超时恢复过渡
+        timeoutRef.current = setTimeout(() => {
+          // 恢复过渡
+          setDisableTransitions(false)
+          root.removeAttribute('data-theme-switching')
+
+          // 发送事件通知主题已完成切换
+          window.dispatchEvent(
+            new CustomEvent('theme-changed-complete', {
+              detail: { theme: appliedTheme },
+            })
+          )
+        }, 100) // 减少到100ms，足够等待DOM更新但不会感到明显延迟
       })
-    })
+
+      // 更新前一个主题引用
+      prevThemeRef.current = theme
+    }
 
     // 监听系统主题变化
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handleChange = () => {
       if (theme === 'system') {
-        const newSystemTheme = mediaQuery.matches ? 'dark' : 'light'
-        root.classList.remove('light', 'dark')
+        // 使用相同的批处理优化系统主题变化
+        setDisableTransitions(true)
+        requestAnimationFrame(() => {
+          const systemTheme = mediaQuery.matches ? 'dark' : 'light'
+          root.classList.remove('light', 'dark')
+          root.classList.add(systemTheme)
 
-        // 添加短暂延迟，确保DOM有时间处理类移除
-        setTimeout(() => {
-          root.classList.add(newSystemTheme)
-        }, 5)
+          timeoutRef.current = setTimeout(() => {
+            setDisableTransitions(false)
+          }, 100)
+        })
       }
     }
 
     mediaQuery.addEventListener('change', handleChange)
-    return () => mediaQuery.removeEventListener('change', handleChange)
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      mediaQuery.removeEventListener('change', handleChange)
+    }
   }, [theme])
 
-  // 优化setTheme函数，使用useCallback提高性能并添加防抖
+  // 优化setTheme函数，使用防抖和引用比较
   const setTheme = useCallback(
     newTheme => {
-      // 防止快速连续切换导致状态紊乱
-      const currentTheme = localStorage.getItem(storageKey)
-
-      if (typeof newTheme === 'function') {
-        newTheme = newTheme(currentTheme || defaultTheme)
+      // 防止连续切换
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
       }
 
-      if (newTheme !== currentTheme) {
-        localStorage.setItem(storageKey, newTheme)
-        setThemeState(newTheme)
+      // 处理函数式更新
+      const resolvedTheme =
+        typeof newTheme === 'function'
+          ? newTheme(prevThemeRef.current || theme)
+          : newTheme
 
-        // 触发自定义事件通知应用主题已更改
+      // 只有在主题真正改变时才更新
+      if (resolvedTheme !== theme) {
+        localStorage.setItem(storageKey, resolvedTheme)
+        setThemeState(resolvedTheme)
+
+        // 触发主题开始更改事件
         window.dispatchEvent(
           new CustomEvent('theme-changed', {
-            detail: { theme: newTheme },
+            detail: { theme: resolvedTheme },
           })
         )
       }
     },
-    [storageKey, defaultTheme]
+    [theme, storageKey]
   )
 
-  // 使用useMemo缓存context值
-  const value = { theme, setTheme }
+  // 缓存context值，避免不必要的重渲染
+  const value = useMemo(
+    () => ({
+      theme,
+      setTheme,
+      isChanging: disableTransitions,
+    }),
+    [theme, setTheme, disableTransitions]
+  )
 
   return (
     <ThemeProviderContext.Provider value={value} {...props}>

@@ -110,6 +110,36 @@
 /* 主题切换保护样式 */
 :root[data-theme-switching='true'] * {
   transition: none !important;
+  animation-duration: 0.001ms !important;
+  animation-delay: -0.001ms !important;
+  color-scheme: light dark !important;
+  contain: paint !important;
+  will-change: auto !important;
+}
+
+/* 延迟加载过渡效果，避免切换时的卡顿 */
+.css-loaded {
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
+/* 优化过渡选择器，减少范围 */
+.css-loaded a,
+.css-loaded button,
+.css-loaded .transition-element {
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+/* 优化动画元素的性能 */
+.animated-element {
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 /* 添加悬停过渡效果 */
@@ -129,15 +159,17 @@ html {
   font-size: var(--font-size-base);
 }
 
+/* 调整基础字体字重 */
 body {
   font-family: var(--font-sans);
   font-size: 1rem; /* 基础字体大小 */
   line-height: 1.6;
+  font-weight: 400; /* 使用常规字重作为基础 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 设置统一的标题字体 */
+/* 设置统一的标题字体和更合适的字重 */
 h1,
 h2,
 h3,
@@ -146,6 +178,7 @@ h5,
 h6 {
   font-family: var(--font-serif);
   line-height: 1.3;
+  font-weight: 500; /* 使用medium字重替代bold */
 }
 
 /* 设置各级标题字体大小 */
@@ -171,6 +204,21 @@ h5 {
 
 h6 {
   font-size: 1rem; /* ~18px */
+}
+
+/* 调整粗体文本的字重 */
+strong,
+b,
+.font-bold {
+  font-weight: 500; /* 使用medium替代bold */
+}
+
+.font-semibold {
+  font-weight: 500; /* 统一使用medium字重 */
+}
+
+.font-medium {
+  font-weight: 500;
 }
 
 /* 增大段落字体大小 */
@@ -255,6 +303,93 @@ p {
 /* 创建特殊类用于需要保留阴影的按钮文本 */
 .text-shadow-button {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* NavItem特定样式 - 无颜色过渡 */
+.nav-item {
+  transition: transform 0.2s ease !important;
+}
+
+.nav-item:hover {
+  transform: scale(1.05);
+}
+
+/* 高性能下划线悬停效果 - 与主题色彩适配 */
+.nav-link-hover {
+  position: relative;
+  text-decoration: none;
+}
+
+.nav-link-hover::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0; /* 修改：从-2px改为0，与激活指示器保持一致 */
+  width: 100%;
+  height: 0.125rem; /* 与激活指示器一致，保持2px */
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.2s ease;
+  will-change: transform;
+  opacity: 0.8;
+}
+
+/* 亮色模式下：使用与激活指示器完全相同的颜色 */
+:root:not(.dark) .nav-link-hover:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+  background-color: rgb(5, 150, 105); /* emerald-600，与激活指示器一致 */
+}
+
+/* 暗色模式下：使用与激活指示器完全相同的颜色 */
+.dark .nav-link-hover:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+  background-color: rgb(110, 231, 183); /* emerald-300，与激活指示器一致 */
+}
+
+/* 避免激活项显示下划线 */
+.nav-link-hover[aria-current='page']::after {
+  display: none;
+}
+
+/* 菜单项下划线效果 - 与主题适配 */
+.menu-link-hover {
+  position: relative;
+  text-decoration: none;
+}
+
+.menu-link-hover::after {
+  content: '';
+  position: absolute;
+  left: 2em; /* 从图标后开始 */
+  right: 0;
+  bottom: 0; /* 修改：统一位置 */
+  height: 0.125rem; /* 与激活指示器一致 */
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s ease;
+  opacity: 0.5; /* 调整透明度，使其更明显 */
+  will-change: transform;
+}
+
+/* 亮色模式下菜单项下划线 - 与主导航一致 */
+:root:not(.dark) .menu-link-hover::after {
+  background-color: rgb(5, 150, 105); /* emerald-600，与激活指示器一致 */
+}
+
+/* 暗色模式下菜单项下划线 - 与主导航一致 */
+.dark .menu-link-hover::after {
+  background-color: rgb(110, 231, 183); /* emerald-300，与激活指示器一致 */
+}
+
+.menu-link-hover:hover::after {
+  transform: scaleX(1);
+}
+
+/* 避免激活项显示下划线 */
+a.menu-link-hover[class*='text-emerald']::after {
+  display: none;
 }
 
 /* VSCode CSS 语言特性说明 */

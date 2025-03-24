@@ -1,33 +1,55 @@
 import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 
 import Photowall from './Photowall'
 // 导入优化的图片组件
+import village1Avif from './assets/village1.avif'
 import village1 from './assets/village1.jpg'
+import village1Webp from './assets/village1.webp'
+import village2Avif from './assets/village2.avif'
 import village2 from './assets/village2.jpg'
+import village2Webp from './assets/village2.webp'
 import OptimizedImage from './components/OptimizedImage'
 import SectionTitle from './components/SectionTitle'
 import { useTheme } from './useTheme'
 
 const TeaStorySection = () => {
   useTheme()
+  const [isLowPerformanceDevice, setIsLowPerformanceDevice] = useState(false)
 
-  // 获取精选产品
+  // 检测设备性能
+  useEffect(() => {
+    const checkDevicePerformance = () => {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      const isLowEndDevice =
+        window.navigator.hardwareConcurrency &&
+        window.navigator.hardwareConcurrency <= 4
 
-  // 优化动画配置
-  const sectionAnimation = {
-    initial: { opacity: 0, y: 30 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, margin: '-50px' },
-    transition: { duration: 0.7, ease: 'easeOut' },
-  }
+      setIsLowPerformanceDevice(isMobile || isLowEndDevice)
+    }
+
+    checkDevicePerformance()
+  }, [])
+
+  // 根据设备性能调整动画配置
+  const sectionAnimation = isLowPerformanceDevice
+    ? { initial: {}, whileInView: {}, viewport: { once: true } } // 低性能设备无动画
+    : {
+        initial: { opacity: 0, y: 30 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, margin: '-50px' },
+        transition: { duration: 0.7, ease: 'easeOut' },
+      }
 
   // 卡片动画配置
-  const cardAnimation = {
-    initial: { opacity: 0, scale: 0.95 },
-    whileInView: { opacity: 1, scale: 1 },
-    viewport: { once: true, margin: '-30px' },
-    transition: { duration: 0.5, ease: 'easeOut' },
-  }
+  const cardAnimation = isLowPerformanceDevice
+    ? { initial: {}, whileInView: {}, viewport: { once: true } } // 低性能设备无动画
+    : {
+        initial: { opacity: 0, scale: 0.95 },
+        whileInView: { opacity: 1, scale: 1 },
+        viewport: { once: true, margin: '-30px' },
+        transition: { duration: 0.5, ease: 'easeOut' },
+      }
 
   // 滚动到产品区
 
@@ -58,16 +80,21 @@ const TeaStorySection = () => {
             </div>
             <div className='order-1 overflow-hidden rounded-2xl shadow-xl dark:shadow-emerald-900/10 md:order-2'>
               <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800 md:h-80 lg:h-96'>
-                {/* 替换为优化的图片组件 */}
-                <OptimizedImage
-                  src={village1}
-                  alt='古代茶文化'
-                  className='h-full w-full object-cover'
-                  motionProps={{
-                    whileHover: { scale: 1.05 },
-                    transition: { duration: 0.5 },
-                  }}
-                />
+                {/* 使用motion.div包裹OptimizedImage */}
+                <motion.div
+                  className='h-full w-full'
+                  whileHover={{ scale: 1.03 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <OptimizedImage
+                    src={village1}
+                    avifSrc={village1Avif}
+                    webpSrc={village1Webp}
+                    alt='古代茶文化'
+                    className='h-full w-full object-cover'
+                    loading='lazy'
+                  />
+                </motion.div>
               </div>
             </div>
           </div>
@@ -77,17 +104,21 @@ const TeaStorySection = () => {
           <div className='grid items-center gap-12 md:grid-cols-2'>
             <div className='overflow-hidden rounded-2xl shadow-xl dark:shadow-emerald-900/10'>
               <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800 md:h-80 lg:h-96'>
-                {/* 替换为优化的图片组件 */}
-                <OptimizedImage
-                  src={village2}
-                  alt='后花园村茶园'
-                  className='h-full w-full object-cover'
-                  motionProps={{
-                    whileHover: { scale: 1.05 },
-                    transition: { duration: 0.5 },
-                  }}
-                  sizes='(max-width: 768px) 100vw, 50vw'
-                />
+                {/* 使用motion.div包裹OptimizedImage */}
+                <motion.div
+                  className='h-full w-full'
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <OptimizedImage
+                    src={village2}
+                    avifSrc={village2Avif}
+                    webpSrc={village2Webp}
+                    alt='后花园村茶园'
+                    className='h-full w-full object-cover'
+                    sizes='(max-width: 768px) 100vw, 50vw'
+                  />
+                </motion.div>
               </div>
             </div>
             <div className='prose max-w-none'>
@@ -104,6 +135,7 @@ const TeaStorySection = () => {
             </div>
           </div>
         </motion.section>
+
         <motion.section className='mb-24' {...sectionAnimation}>
           {/* 制茶工艺 */}
           <SectionTitle
@@ -113,13 +145,13 @@ const TeaStorySection = () => {
           />
           <div className='grid gap-6 md:grid-cols-3'>
             <motion.div
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className='rounded-xl border border-gray-200 bg-white/90 p-8 shadow-lg transition-all hover:shadow-xl dark:border-gray-700 dark:bg-gray-800/90'
+              whileHover={isLowPerformanceDevice ? {} : { y: -5 }} // 条件应用悬停效果
+              transition={{ duration: 0.3 }} // 减少动画时间
+              className='rounded-xl border border-gray-200 bg-white/90 p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800/90'
               {...cardAnimation}
               style={{
-                willChange: 'transform, box-shadow',
-                transform: 'translateZ(0)', // 开启GPU加速，减少重排
+                willChange: 'transform, opacity', // 仅声明实际改变的属性
+                transform: 'translateZ(0)',
               }}
             >
               <div className='mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'>
@@ -144,13 +176,13 @@ const TeaStorySection = () => {
               </p>
             </motion.div>
             <motion.div
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className='rounded-xl border border-gray-100 bg-white/90 p-8 shadow-lg transition-all hover:shadow-xl dark:border-gray-700 dark:bg-gray-800/80'
+              whileHover={isLowPerformanceDevice ? {} : { y: -5 }} // 条件应用悬停效果
+              transition={{ duration: 0.3 }} // 减少动画时间
+              className='rounded-xl border border-gray-100 bg-white/90 p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800/80'
               {...cardAnimation}
               style={{
-                willChange: 'transform, box-shadow',
-                transform: 'translateZ(0)', // 开启GPU加速，减少重排
+                willChange: 'transform, opacity', // 仅声明实际改变的属性
+                transform: 'translateZ(0)',
               }}
             >
               <div className='mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300'>
@@ -175,13 +207,13 @@ const TeaStorySection = () => {
               </p>
             </motion.div>
             <motion.div
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className='rounded-xl border border-gray-100 bg-white/90 p-8 shadow-lg transition-all hover:shadow-xl dark:border-gray-700 dark:bg-gray-800/80'
+              whileHover={isLowPerformanceDevice ? {} : { y: -5 }} // 条件应用悬停效果
+              transition={{ duration: 0.3 }} // 减少动画时间
+              className='rounded-xl border border-gray-100 bg-white/90 p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800/80'
               {...cardAnimation}
               style={{
-                willChange: 'transform, box-shadow',
-                transform: 'translateZ(0)', // 开启GPU加速，减少重排
+                willChange: 'transform, opacity', // 仅声明实际改变的属性
+                transform: 'translateZ(0)',
               }}
             >
               <div className='mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300'>
@@ -216,7 +248,6 @@ const TeaStorySection = () => {
           />
           <Photowall />
         </motion.section>
-
       </div>
     </section>
   )

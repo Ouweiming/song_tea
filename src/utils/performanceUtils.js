@@ -2,8 +2,87 @@
  * 性能优化工具
  * 用于监控和减少回流、重绘相关的性能问题
  */
-// 导入节流函数
 import { throttle } from './domUtils'
+
+// 检测设备性能和功能
+export function detectDeviceCapabilities() {
+  const capabilities = {
+    isLowEndDevice: false,
+    isReducedMotion: false,
+    isTouchDevice: false,
+    hardwareConcurrency: navigator.hardwareConcurrency || 4,
+    shouldOptimizeAnimations: false,
+  }
+
+  // 低端设备检测
+  capabilities.isLowEndDevice =
+    capabilities.hardwareConcurrency <= 4 ||
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    )
+
+  // 减少动画设置
+  capabilities.isReducedMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)'
+  ).matches
+
+  // 触摸设备检测
+  capabilities.isTouchDevice =
+    'ontouchstart' in window || navigator.maxTouchPoints > 0
+
+  // 判断是否应该优化动画
+  capabilities.shouldOptimizeAnimations =
+    capabilities.isLowEndDevice || capabilities.isReducedMotion
+
+  return capabilities
+}
+
+// 获取优化的动画配置
+export function getOptimizedAnimationProps(shouldOptimize = false) {
+  if (shouldOptimize) {
+    return {
+      // 减少动画
+      transition: { duration: 0.2, ease: 'easeOut' },
+      animate: { opacity: 1, y: 0 }, // 简化动画
+      initial: { opacity: 0, y: 10 },
+      viewport: { once: true, margin: '0px' },
+    }
+  }
+
+  return {
+    // 标准动画
+    transition: { duration: 0.5, ease: 'easeOut' },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    initial: { opacity: 0, y: 30, scale: 0.95 },
+    viewport: { once: true, margin: '-50px' },
+  }
+}
+
+// 优化DOM操作批量处理
+export function batchDomOperations(operations = []) {
+  return new Promise(resolve => {
+    // 在下一帧执行所有读取操作
+    requestAnimationFrame(() => {
+      // 读取阶段
+      const results = operations
+        .filter(op => typeof op.read === 'function')
+        .map(op => ({ id: op.id, result: op.read() }))
+
+      // 在再下一帧执行所有写入操作
+      requestAnimationFrame(() => {
+        // 写入阶段
+        operations
+          .filter(op => typeof op.write === 'function')
+          .forEach(op => {
+            const resultData = results.find(r => r.id === op.id)?.result
+            op.write(resultData)
+          })
+
+        resolve(results)
+      })
+    })
+  })
+}
 
 // 检测是否支持性能API
 const hasPerformanceAPI =

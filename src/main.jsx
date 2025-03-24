@@ -2,45 +2,56 @@ import * as React from 'react'
 import ReactDOM from 'react-dom/client'
 
 // 确保React先加载
-
 import App from './App'
 import './index.css'
 import './preload'
+import './utils/domTools.js'
+import './utils/initPerformance'
 
-// 预加载关键资源
-const preloadResources = () => {
-  // 创建资源预加载 hint
-  const links = [
-    // 预加载logo和关键图片资源
-    { rel: 'preload', href: '/src/assets/logo.svg', as: 'image' },
-    // 视频预获取 (比预加载优先级低，不会阻塞关键资源)
-    { rel: 'prefetch', href: '/src/assets/video.mp4', as: 'video' },
-    { rel: 'prefetch', href: '/src/assets/video.webm', as: 'video' },
-  ]
-
-  // 动态添加预加载标记
-  links.forEach(linkProps => {
-    const link = document.createElement('link')
-    Object.entries(linkProps).forEach(([key, value]) => {
-      link[key] = value
-    })
-    document.head.appendChild(link)
-  })
-}
-
-// 在适当时机调用预加载函数
-if (typeof window !== 'undefined') {
-  // 使用 requestIdleCallback 在浏览器空闲时执行
-  if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(preloadResources)
-  } else {
-    // 回退方案
-    setTimeout(preloadResources, 1)
+// 创建一个加载优先级管理器
+const optimizeCriticalPath = () => {
+  // 立即添加requestIdleCallback polyfill
+  if (!('requestIdleCallback' in window)) {
+    window.requestIdleCallback = cb => {
+      const start = Date.now()
+      return setTimeout(() => {
+        cb({
+          didTimeout: false,
+          timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
+        })
+      }, 1)
+    }
+    window.cancelIdleCallback = id => clearTimeout(id)
   }
+
+  // 先渲染应用
+  const root = ReactDOM.createRoot(document.getElementById('root'))
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  )
+
+  // 在空闲时间预加载关键资源
+  requestIdleCallback(
+    () => {
+      // 预加载常用资源
+      const assets = [
+        { href: '/src/assets/logo.svg', as: 'image' },
+        { href: '/src/assets/video.webm', as: 'video' },
+      ]
+
+      assets.forEach(asset => {
+        const link = document.createElement('link')
+        link.rel = 'prefetch'
+        link.href = asset.href
+        link.as = asset.as
+        document.head.appendChild(link)
+      })
+    },
+    { timeout: 3000 }
+  )
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-)
+// 执行优化
+optimizeCriticalPath()
