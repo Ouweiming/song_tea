@@ -3,9 +3,6 @@ import {
   NavbarBrand,
   NavbarContent,
   NavbarItem,
-  NavbarMenu,
-  NavbarMenuItem,
-  NavbarMenuToggle,
   Navbar as NextUINavbar,
 } from '@nextui-org/react'
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
@@ -47,7 +44,7 @@ const NavItem = memo(
     isActive,
     handleNavigation,
     theme,
-    isNavigating, // 保留这个参数，用于动画时序调整
+    isNavigating,
     compact = false,
   }) => {
     return (
@@ -62,12 +59,11 @@ const NavItem = memo(
                 ? 'text-gray-100'
                 : 'text-gray-900'
           }`}
-          whileHover={{ scale: 1.05 }} // 仅保留缩放效果
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           aria-current={isActive(item.href) ? 'page' : undefined}
           role='menuitem'
           style={{ willChange: 'transform' }}
-          // 根据导航状态调整动画
           data-navigating={isNavigating ? 'true' : 'false'}
         >
           {/* 在紧凑模式下显示短名称或图标 */}
@@ -95,7 +91,7 @@ const NavItem = memo(
                 type: 'spring',
                 stiffness: 300,
                 damping: 30,
-                duration: isNavigating ? 0.15 : 0.2, // 使用isNavigating调整动画时长
+                duration: isNavigating ? 0.15 : 0.2,
               }}
               style={{ willChange: 'transform' }}
               aria-hidden='true'
@@ -121,47 +117,6 @@ NavItem.propTypes = {
   theme: PropTypes.string.isRequired,
   isNavigating: PropTypes.bool,
   compact: PropTypes.bool,
-}
-
-// 分离并优化菜单项组件 - 添加下划线悬停效果
-const MenuItem = memo(
-  ({ item, isActive, handleNavigation, theme: themeMode, index }) => {
-    return (
-      <NavbarMenuItem>
-        <motion.a
-          href={item.href}
-          onClick={e => handleNavigation(item.href, e)}
-          className={`menu-link-hover flex w-full items-center py-3 text-lg ${
-            isActive(item.href)
-              ? 'font-medium text-emerald-600 dark:text-emerald-300'
-              : 'text-gray-700 dark:text-gray-200'
-          }`}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.05 * index }}
-          whileHover={{ x: 5 }} // 仅保留位移效果
-          data-theme={themeMode} // 使用主题值作为数据属性，避免未使用警告
-        >
-          <span className='mr-2'>{item.icon}</span>
-          {item.name}
-        </motion.a>
-      </NavbarMenuItem>
-    )
-  }
-)
-
-// 添加显示名称和PropTypes
-MenuItem.displayName = 'MenuItem'
-MenuItem.propTypes = {
-  item: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    href: PropTypes.string.isRequired,
-    icon: PropTypes.node.isRequired,
-  }).isRequired,
-  isActive: PropTypes.func.isRequired,
-  handleNavigation: PropTypes.func.isRequired,
-  theme: PropTypes.string.isRequired,
-  index: PropTypes.number.isRequired,
 }
 
 // 简化主题切换按钮动画效果
@@ -193,67 +148,24 @@ ThemeToggleButton.propTypes = {
 // 主标题栏组件，使用memo优化
 const Header = () => {
   const { setTheme, theme, isChangingTheme } = useTheme()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState('')
-  const [isPageReady, setIsPageReady] = useState(false)
+  const [, setIsPageReady] = useState(false)
   const [isNavigating, setIsNavigating] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { scrollYProgress } = useScroll()
   const headerRef = useRef(null)
-  const menuToggleRef = useRef(null)
-  const menuClickedRef = useRef(false)
-  const menuActionTimeRef = useRef(Date.now())
   const navigationLockTimeRef = useRef(null)
 
-  // 添加页面加载完成后的准备状态
+  // 添加页面加载完成后的准备状态 - 减少等待时间
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsPageReady(true)
-    }, 500)
+    }, 300) // 从500ms减至300ms以提高响应性
 
     return () => clearTimeout(timer)
   }, [])
-
-  // 添加专门的菜单切换处理函数，修复点击收缩问题
-  const handleMenuToggle = useCallback(event => {
-    // 防止事件冒泡和默认行为
-    if (event) {
-      event.preventDefault()
-      event.stopPropagation()
-    }
-
-    // 处理快速连续点击保护
-    const now = Date.now()
-    if (now - menuActionTimeRef.current < 300) {
-      return
-    }
-    menuActionTimeRef.current = now
-
-    // 标记已点击，防止NextUI内部状态冲突
-    menuClickedRef.current = true
-
-    // 设置菜单状态
-    setIsMenuOpen(prev => !prev)
-
-    // 延迟清除点击标记
-    setTimeout(() => {
-      menuClickedRef.current = false
-    }, 500)
-  }, [])
-
-  // 强制同步外部菜单状态和内部实现
-  const handleNextUIMenuChange = useCallback(
-    open => {
-      if (!menuClickedRef.current && isPageReady) {
-        setTimeout(() => {
-          setIsMenuOpen(open)
-        }, 50)
-      }
-    },
-    [isPageReady]
-  )
 
   // 优化spring效果，降低渲染负担
   const scaleX = useSpring(scrollYProgress, {
@@ -328,9 +240,22 @@ const Header = () => {
     []
   )
 
-  // 更新屏幕尺寸检测，为不同尺寸设置状态
+  // 更新屏幕尺寸检测，优化使用防抖函数减少布局计算
   useEffect(() => {
-    const checkScreenSize = () => {
+    // 使用防抖函数减少处理频率
+    const debounce = (func, wait) => {
+      let timeout
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout)
+          func(...args)
+        }
+        clearTimeout(timeout)
+        timeout = setTimeout(later, wait)
+      }
+    }
+
+    const checkScreenSize = debounce(() => {
       const width = window.innerWidth
       setScreenSize({
         width,
@@ -338,13 +263,13 @@ const Header = () => {
         isTablet: width >= 768 && width < 1024,
         isDesktop: width >= 1024,
       })
-    }
+    }, 150) // 使用150ms的防抖
 
     // 初始检查
     checkScreenSize()
 
-    // 添加resize监听
-    window.addEventListener('resize', checkScreenSize)
+    // 使用passive标志提高性能
+    window.addEventListener('resize', checkScreenSize, { passive: true })
 
     return () => {
       window.removeEventListener('resize', checkScreenSize)
@@ -355,14 +280,17 @@ const Header = () => {
   const scrollToElement = useCallback(href => {
     const element = document.querySelector(href)
     if (element) {
-      const headerHeight = headerRef.current?.offsetHeight || 80
-      const elementPosition =
-        element.getBoundingClientRect().top + window.pageYOffset
-      const offsetPosition = elementPosition - headerHeight
+      // 使用requestAnimationFrame优化性能
+      requestAnimationFrame(() => {
+        const headerHeight = headerRef.current?.offsetHeight || 80
+        const elementPosition =
+          element.getBoundingClientRect().top + window.pageYOffset
+        const offsetPosition = elementPosition - headerHeight
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth',
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        })
       })
     }
   }, [])
@@ -439,10 +367,6 @@ const Header = () => {
         clearTimeout(navigationLockTimeRef.current)
       }
 
-      if (isMenuOpen) {
-        setIsMenuOpen(false)
-      }
-
       if (href.startsWith('#')) {
         // 立即更新活跃状态以响应用户点击
         setActiveSection(href)
@@ -479,7 +403,6 @@ const Header = () => {
       }
     },
     [
-      isMenuOpen,
       location.pathname,
       navigate,
       scrollToElement,
@@ -511,7 +434,7 @@ const Header = () => {
     // 如果没有找到任何元素，则不继续
     if (Object.keys(sectionRefs).length === 0) return
 
-    // 更高效的滚动处理函数
+    // 更高效的滚动处理函数 - 增加节流时间从100ms到150ms
     const handleScroll = throttle(() => {
       // 防止在导航期间处理滚动
       if (isNavigating) return
@@ -559,7 +482,7 @@ const Header = () => {
           setActiveSection('/')
         }
       })
-    }, 100)
+    }, 150) // 提高节流时间以减少处理频率
 
     window.addEventListener('scroll', handleScroll, { passive: true })
 
@@ -584,7 +507,7 @@ const Header = () => {
       if (href === '/') {
         return (
           (location.pathname === '/' || location.pathname === '/Homepage') &&
-          (activeSection === '/' || activeSection === '') // 只有当activeSection真的是首页或未设置时才激活
+          (activeSection === '/' || activeSection === '')
         )
       }
 
@@ -610,6 +533,7 @@ const Header = () => {
         backgroundColor: navbarTransforms.background,
         backdropFilter: navbarTransforms.blur,
         willChange: 'backdrop-filter, height',
+        transform: 'translateZ(0)', // 添加GPU加速
       }}
       className={`fixed left-0 right-0 top-0 z-50 ${
         scrolled ? 'shadow-lg dark:shadow-gray-900/20' : ''
@@ -622,17 +546,15 @@ const Header = () => {
         damping: 15,
       }}
     >
-      {/* 保留进度指示器，但也移除它的悬浮效果 */}
+      {/* 进度指示器 */}
       <motion.div
         className='absolute bottom-0 left-0 right-0 h-0.5 origin-left bg-gradient-to-r from-emerald-400 to-teal-500'
         style={{ scaleX, willChange: 'transform' }}
       />
 
-      {/* 添加外层容器，用于居中整个导航栏 */}
+      {/* 外层容器，用于居中整个导航栏 */}
       <div className='container mx-auto px-4'>
         <NextUINavbar
-          isMenuOpen={isMenuOpen}
-          onMenuOpenChange={handleNextUIMenuChange}
           shouldHideOnScroll={false}
           isBordered={false}
           maxWidth='xl'
@@ -640,41 +562,20 @@ const Header = () => {
           style={{ height: navbarTransforms.height }}
           isBlurred={false}
         >
-          {/* 移动端布局 - 仅在小屏幕显示 */}
+          {/* 移动端导航区域 - 左侧Logo和右侧图标导航 */}
           <NavbarContent
-            className='sm:w-[15%] md:w-[20%] lg:hidden'
+            className='w-[50%] sm:w-[40%] md:w-[30%] lg:hidden'
             justify='start'
           >
-            <div
-              ref={menuToggleRef}
-              onClick={isPageReady ? handleMenuToggle : undefined}
-              className={`cursor-pointer p-2 ${isPageReady ? '' : 'pointer-events-none'}`}
-            >
-              <NavbarMenuToggle
-                aria-label={isMenuOpen ? '关闭菜单' : '打开菜单'}
-                className={
-                  theme === 'dark' ? 'text-emerald-300' : 'text-emerald-600'
-                }
-                onClick={e => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                }}
-                isselected={isMenuOpen ? 'true' : 'false'}
-              />
-            </div>
-          </NavbarContent>
-
-          {/* 移动端Logo - 居中显示 - 修改文字居中问题 */}
-          <NavbarContent
-            className='flex-1 justify-center lg:hidden'
-            justify='center'
-          >
-            <NavbarBrand className='mx-auto flex w-full items-center justify-center'>
-              <div className='flex flex-row items-center justify-center'>
+            <NavbarBrand className='flex items-center'>
+              <div
+                className='flex cursor-pointer flex-row items-center'
+                onClick={e => handleNavigation('/', e)}
+              >
                 <img
                   src={Logo}
                   alt='后花园庄宋茶'
-                  className={`h-12 w-12 md:h-14 md:w-14 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
+                  className={`h-10 w-10 sm:h-12 sm:w-12 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
                 />
                 <div
                   className={
@@ -683,11 +584,41 @@ const Header = () => {
                       : 'ml-2 flex items-center text-emerald-600'
                   }
                 >
-                  <span className='text-lg font-bold md:text-xl'>后花园庄</span>
+                  <span className='text-base font-bold sm:text-lg'>
+                    后花园庄
+                  </span>
                   <span className='ml-1 text-xs'>宋茶</span>
                 </div>
               </div>
             </NavbarBrand>
+          </NavbarContent>
+
+          {/* 移动端导航图标 - 右侧显示图标菜单 */}
+          <NavbarContent className='flex-1 justify-end lg:hidden' justify='end'>
+            <div className='flex items-center space-x-2'>
+              {menuItems.map((item, index) => (
+                <Button
+                  key={`mobile-${index}`}
+                  isIconOnly
+                  size='sm'
+                  variant={isActive(item.href) ? 'solid' : 'light'}
+                  color={isActive(item.href) ? 'success' : 'default'}
+                  aria-label={item.name}
+                  className='rounded-full'
+                  onPress={e => handleNavigation(item.href, e)}
+                >
+                  {React.cloneElement(item.icon, {
+                    className: isActive(item.href)
+                      ? 'text-white'
+                      : theme === 'dark'
+                        ? 'text-gray-300'
+                        : 'text-gray-700',
+                    size: 18,
+                  })}
+                </Button>
+              ))}
+              <ThemeToggleButton theme={theme} handleToggle={handleToggle} />
+            </div>
           </NavbarContent>
 
           {/* 大屏幕Logo - 固定宽度和位置 */}
@@ -726,86 +657,15 @@ const Header = () => {
             </div>
           </NavbarContent>
 
-          {/* 主题切换按钮 */}
+          {/* 大屏幕主题切换按钮 */}
           <NavbarContent
             justify='end'
-            className='sm:w-[20%] md:w-[20%] lg:w-[25%]'
+            className='hidden sm:w-[20%] md:w-[20%] lg:flex lg:w-[25%]'
           >
             <NavbarItem className='flex justify-end'>
               <ThemeToggleButton theme={theme} handleToggle={handleToggle} />
             </NavbarItem>
           </NavbarContent>
-
-          {/* 改进的移动端菜单 - 优化性能，修复卡顿问题 */}
-          <NavbarMenu
-            className={
-              theme === 'dark'
-                ? 'bg-gray-900/95 pt-6 backdrop-blur-xl'
-                : 'bg-white/95 pt-6 backdrop-blur-xl'
-            }
-            // 预加载菜单以避免首次点击卡顿
-            style={{
-              opacity: isMenuOpen ? 1 : 0,
-              visibility: isMenuOpen ? 'visible' : 'hidden',
-              // 使用硬件加速
-              willChange: 'opacity, transform',
-              // 优化性能的CSS属性
-              transform: isMenuOpen
-                ? 'translateY(0) translateZ(0)' // 添加translateZ(0)开启GPU加速
-                : 'translateY(-10px) translateZ(0)',
-              // 指定只改变这两个属性，避免重绘其他属性
-              transition:
-                'opacity 250ms ease, transform 250ms ease, visibility 250ms ease',
-            }}
-          >
-            <div className='container mx-auto px-4 pt-4'>
-              {/* 添加菜单标题增强用户体验 */}
-              <motion.h3
-                className={`mb-6 text-lg font-medium ${
-                  theme === 'dark' ? 'text-emerald-300' : 'text-emerald-700'
-                }`}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{
-                  opacity: isMenuOpen ? 1 : 0,
-                  x: isMenuOpen ? 0 : -20,
-                }}
-                transition={{ delay: 0.05 }}
-              >
-                导航菜单
-              </motion.h3>
-
-              <div className='grid gap-2'>
-                {menuItems.map((item, index) => (
-                  <MenuItem
-                    key={index}
-                    item={item}
-                    isActive={isActive}
-                    handleNavigation={handleNavigation}
-                    theme={theme}
-                    index={isMenuOpen ? index : 0}
-                  />
-                ))}
-              </div>
-
-              {/* 添加品牌信息到菜单底部 */}
-              <motion.div
-                className={`mt-8 border-t ${
-                  theme === 'dark' ? 'border-gray-700' : 'border-gray-200'
-                } pt-4 text-sm opacity-80`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: isMenuOpen ? 0.8 : 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <p
-                  className={
-                    theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-                  }
-                >
-                  © 2024 醉茶小皇帝
-                </p>
-              </motion.div>
-            </div>
-          </NavbarMenu>
         </NextUINavbar>
       </div>
     </motion.div>
