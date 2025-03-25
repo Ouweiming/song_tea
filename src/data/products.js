@@ -22,7 +22,7 @@ export const products = [
     avifImage: Product1Avif,
     webpImage: Product1Webp,
     name: '宋茶·墨玉',
-    description: '采自高山云雾中的茶叶，滋味醇厚回甘',
+    description: '高山云雾中的茶叶，醇厚回甘',
     category: '绿茶',
   },
   {

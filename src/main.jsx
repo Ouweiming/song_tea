@@ -1,8 +1,9 @@
 import * as React from 'react'
 import ReactDOM from 'react-dom/client'
 
-// 优先导入必要的性能优化工具
+// 优先导入必要的性能优化工具和加载组件
 import './utils/performanceUtils'
+import LoadingSpinner from './LoadingSpinner'
 
 // 延迟导入非关键资源
 const lazyInit = () => {
@@ -13,7 +14,32 @@ const lazyInit = () => {
         <App />
       </React.StrictMode>
     )
+    
+    // App 渲染后立即触发移除 spinner 的操作
+    removeSpinner()
   })
+}
+
+// 创建一个独立的函数来移除 spinner
+let spinnerRemovalTimeout = null
+const removeSpinner = () => {
+  const spinnerContainer = document.getElementById('spinner-container')
+  if (!spinnerContainer) return
+  
+  // 清除之前的超时，确保不会重复执行
+  if (spinnerRemovalTimeout) {
+    clearTimeout(spinnerRemovalTimeout)
+  }
+  
+  // 添加淡出效果
+  spinnerContainer.style.opacity = '0'
+  
+  // 设置一个延迟，在淡出动画完成后移除元素
+  spinnerRemovalTimeout = setTimeout(() => {
+    if (spinnerContainer.parentNode) {
+      spinnerContainer.parentNode.removeChild(spinnerContainer)
+    }
+  }, 300)
 }
 
 // 创建一个加载优先级管理器
@@ -45,22 +71,16 @@ const optimizeCriticalPath = () => {
     return
   }
 
-  // 使用更小的初始渲染
-  const preloader = document.createElement('div')
-  preloader.className = 'app-preloader'
-  preloader.innerHTML = `
-    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; 
-                background: linear-gradient(135deg, #f6f2e9 0%, #8ed4ca 100%);">
-      <div style="text-align: center;">
-        <svg width="60" height="60" viewBox="0 0 24 24" style="margin-bottom: 16px;">
-          <path fill="#10b981" d="M12 21C7 17 2 13 2 8.5C2 5.42 4.42 3 7.5 3c1.74 0 3 1 4.5 3C13.5 4 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5c0 4.5-5 8.5-10 12.5z"></path>
-        </svg>
-        <div style="font-family: system-ui, sans-serif; color: #065f46; font-size: 18px; font-weight: 600;">
-          后花园宋茶
-        </div>
-      </div>
-    </div>
-  `
+  // 创建一个容器用于渲染LoadingSpinner
+  const spinnerContainer = document.createElement('div')
+  spinnerContainer.id = 'spinner-container'
+  spinnerContainer.style.position = 'fixed'
+  spinnerContainer.style.top = '0'
+  spinnerContainer.style.left = '0'
+  spinnerContainer.style.width = '100%'
+  spinnerContainer.style.height = '100%'
+  spinnerContainer.style.zIndex = '9999'
+  spinnerContainer.style.transition = 'opacity 0.3s ease'
 
   // 检查root是否存在，不存在就创建
   let rootElement = document.getElementById('root')
@@ -70,29 +90,37 @@ const optimizeCriticalPath = () => {
     document.body.appendChild(rootElement)
   }
 
-  // 先显示静态加载界面
-  rootElement.appendChild(preloader)
+  // 添加spinner容器到body
+  document.body.appendChild(spinnerContainer)
+  
+  // 渲染LoadingSpinner到容器
+  const spinnerRoot = ReactDOM.createRoot(spinnerContainer)
+  spinnerRoot.render(<LoadingSpinner size={50} />)
 
   // 使用requestIdleCallback延迟初始化应用
   requestIdleCallback(
     () => {
       lazyInit()
 
-      // 在应用加载后，移除预加载器
+      // 添加多重保障确保spinner被移除
+      
+      // 1. 监听 DOMContentLoaded 事件（如果尚未触发）
+      if (document.readyState !== 'loading') {
+        // 如果DOM已加载，设置一个延迟移除
+        setTimeout(removeSpinner, 2000);
+      } else {
+        document.addEventListener('DOMContentLoaded', () => {
+          setTimeout(removeSpinner, 2000);
+        });
+      }
+      
+      // 2. 监听 load 事件
       window.addEventListener('load', () => {
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            preloader.style.opacity = '0'
-            preloader.style.transition = 'opacity 0.3s ease'
-
-            setTimeout(() => {
-              if (preloader.parentNode === rootElement) {
-                rootElement.removeChild(preloader)
-              }
-            }, 300)
-          }, 300)
-        })
-      })
+        setTimeout(removeSpinner, 1000);
+      });
+      
+      // 3. 设置一个最终保障的超时
+      setTimeout(removeSpinner, 5000);
     },
     { timeout: 1000 }
   )

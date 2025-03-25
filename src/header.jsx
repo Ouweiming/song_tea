@@ -126,7 +126,7 @@ const ThemeToggleButton = memo(({ theme, handleToggle }) => {
       variant='light'
       color='success'
       aria-label={theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'}
-      className='p-2 transition-all duration-100 rounded-full hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
+      className='rounded-full p-2 transition-all duration-100 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
       onPress={handleToggle}
     >
       {theme === 'dark' ? (
@@ -290,20 +290,32 @@ const Header = () => {
 
   // 封装滚动函数减少代码重复
   const scrollToElement = useCallback(href => {
-    const element = document.querySelector(href)
-    if (element) {
-      // 使用requestAnimationFrame优化性能
-      requestAnimationFrame(() => {
-        const headerHeight = headerRef.current?.offsetHeight || 80
-        const elementPosition =
-          element.getBoundingClientRect().top + window.scrollY
-        const offsetPosition = elementPosition - headerHeight
+    // 确保href是一个有效的选择器
+    if (!href || typeof href !== 'string') return
 
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth',
+    // 如果是锚点但没有#前缀，添加前缀
+    const selector = href.startsWith('#')
+      ? href
+      : `#${href.replace(/^\/+/, '')}`
+
+    try {
+      const element = document.querySelector(selector)
+      if (element) {
+        // 使用requestAnimationFrame优化性能
+        requestAnimationFrame(() => {
+          const headerHeight = headerRef.current?.offsetHeight || 80
+          const elementPosition =
+            element.getBoundingClientRect().top + window.scrollY
+          const offsetPosition = elementPosition - headerHeight
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth',
+          })
         })
-      })
+      }
+    } catch (error) {
+      console.error('Failed to scroll to element', selector, error)
     }
   }, [])
 
@@ -365,13 +377,19 @@ const Header = () => {
   // 优化导航函数 - 添加导航锁定机制
   const handleNavigation = useCallback(
     (href, event) => {
-      if (event) event.preventDefault()
+      // 接受NextUI的事件对象或普通事件对象
+      if (event && event.preventDefault) {
+        event.preventDefault()
+        // 防止事件冒泡
+        event.stopPropagation && event.stopPropagation()
+      }
 
       // 如果已经在导航中，忽略重复点击
       if (isNavigating) return
 
       // 设置导航状态锁定
       setIsNavigating(true)
+      console.log('导航到:', href) // 调试用
 
       // 清除之前的任何导航锁定计时器
       if (navigationLockTimeRef.current) {
@@ -579,7 +597,7 @@ const Header = () => {
 
   return isPageReady ? (
     <motion.div
-      className='fixed top-0 left-0 right-0 z-50'
+      className='fixed left-0 right-0 top-0 z-50'
       style={{
         backgroundColor: navbarTransforms.background,
         backdropFilter: navbarTransforms.blur,
@@ -594,7 +612,7 @@ const Header = () => {
       />
 
       {/* 外层容器，用于居中整个导航栏 */}
-      <div className='container px-4 mx-auto'>
+      <div className='container mx-auto px-4'>
         <NextUINavbar
           ref={headerRef}
           shouldHideOnScroll={false}
@@ -611,7 +629,7 @@ const Header = () => {
           >
             <NavbarBrand className='flex items-center'>
               <div
-                className='flex flex-row items-center cursor-pointer'
+                className='flex cursor-pointer flex-row items-center'
                 onClick={e => handleNavigation('/', e)}
               >
                 <img
@@ -636,7 +654,7 @@ const Header = () => {
           </NavbarContent>
 
           {/* 移动端导航图标 - 右侧显示图标菜单 */}
-          <NavbarContent className='justify-end flex-1 lg:hidden'>
+          <NavbarContent className='flex-1 justify-end lg:hidden'>
             <div className='flex items-center justify-end space-x-1 sm:space-x-2'>
               {menuItems.map((item, index) => (
                 <Button
@@ -647,8 +665,10 @@ const Header = () => {
                   color={isActive(item.href) ? 'success' : 'default'}
                   aria-label={item.name}
                   className='rounded-full'
-                  onPress={e => {
-                    e.preventDefault() // 阻止默认行为
+                  onClick={e => {
+                    // 使用onClick而不是onPress以确保兼容性
+                    e.preventDefault()
+                    e.stopPropagation()
                     handleNavigation(item.href, e)
                   }}
                 >
@@ -670,7 +690,7 @@ const Header = () => {
           <NavbarContent className='hidden w-[25%] lg:flex' justify='start'>
             <NavbarBrand className='flex w-full max-w-[220px] items-center'>
               <div
-                className='flex items-center h-full cursor-pointer'
+                className='flex h-full cursor-pointer items-center'
                 onClick={e => handleNavigation('/', e)}
               >
                 <img
@@ -699,7 +719,7 @@ const Header = () => {
             className='hidden md:w-[60%] lg:flex lg:w-[50%]'
             justify='center'
           >
-            <div className='flex items-center justify-center w-full space-x-1 whitespace-nowrap xl:space-x-3'>
+            <div className='flex w-full items-center justify-center space-x-1 whitespace-nowrap xl:space-x-3'>
               {menuItems.map((item, index) => (
                 <NavItem
                   key={`${index}-${theme}`}
