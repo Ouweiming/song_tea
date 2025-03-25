@@ -42,6 +42,11 @@
     'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif:
     'Noto Serif SC', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+
+  /* 过渡效果基础变量 */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
 }
 
 /* 暗色模式变量 */
@@ -152,8 +157,8 @@ html {
   animation-duration: 0.001ms;
   animation-delay: -0.001ms;
   color-scheme: light dark !important;
-  contain: paint !important;
-  will-change: auto !important;
+  contain: paint !重要;
+  will-change: auto !重要;
 }
 
 /* 延迟加载过渡效果，避免切换时的卡顿 */
@@ -346,7 +351,7 @@ p {
 
 /* NavItem特定样式 - 无颜色过渡 */
 .nav-item {
-  transition: transform 0.2s ease !重要;
+  transition: transform 0.2s ease !important;
 }
 
 .nav-item:hover {

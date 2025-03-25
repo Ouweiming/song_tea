@@ -1,10 +1,7 @@
 import { motion, useAnimation } from 'framer-motion'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 // 明确导入React
 import { useInView } from 'react-intersection-observer'
-
-// 更新引用，使用统一的throttle函数
-import { throttle } from './utils/performanceUtils'
 
 // 创建叶子形状的变体
 const teaLeafPath =
@@ -100,24 +97,21 @@ const Heart = memo(() => {
     checkPerformance()
   }, [])
 
-  // 使用useMemo缓存节流函数
-  const throttledResizeHandler = useMemo(() => {
-    return throttle(() => {
-      // 避免在回调内调用setState，使用函数式更新
-      setSize(calculateSize())
-    }, 200)
-  }, [])
+  // 简化的resize处理函数，不使用throttle
+  const handleResize = () => {
+    setSize(calculateSize())
+  }
 
   // 优化ResizeObserver使用
   useEffect(() => {
-    if ('ResizeObserver' in window) {
-      // 初始化大小
-      setSize(calculateSize())
+    // 初始化大小
+    setSize(calculateSize())
 
+    if ('ResizeObserver' in window) {
       // 创建ResizeObserver
       const resizeObserver = new ResizeObserver(() => {
         // 使用requestAnimationFrame确保在下一帧渲染前更新
-        requestAnimationFrame(throttledResizeHandler)
+        requestAnimationFrame(handleResize)
       })
 
       // 只观察根元素
@@ -127,17 +121,16 @@ const Heart = memo(() => {
     } else {
       // 回退方案
       const resizeHandler = () => {
-        requestAnimationFrame(throttledResizeHandler)
+        requestAnimationFrame(handleResize)
       }
 
       window.addEventListener('resize', resizeHandler)
-      setSize(calculateSize())
 
       return () => {
         window.removeEventListener('resize', resizeHandler)
       }
     }
-  }, [throttledResizeHandler])
+  }, [])
 
   return (
     <div className='flex items-center justify-center py-2' ref={ref}>
@@ -150,8 +143,6 @@ const Heart = memo(() => {
         className='drop-shadow-md filter'
         style={{
           willChange: 'transform, opacity',
-          contain: 'strict', // 优化渲染
-          contentVisibility: 'auto',
         }}
         aria-hidden='true'
       >

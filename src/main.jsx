@@ -1,8 +1,8 @@
 import * as React from 'react'
 import ReactDOM from 'react-dom/client'
 
-// 优先导入必要的性能优化工具和加载组件
-import './utils/performanceUtils'
+// 删除性能优化工具导入
+// import './utils/performanceUtils'
 import LoadingSpinner from './LoadingSpinner'
 
 // 延迟导入非关键资源
@@ -14,7 +14,7 @@ const lazyInit = () => {
         <App />
       </React.StrictMode>
     )
-    
+
     // App 渲染后立即触发移除 spinner 的操作
     removeSpinner()
   })
@@ -25,15 +25,15 @@ let spinnerRemovalTimeout = null
 const removeSpinner = () => {
   const spinnerContainer = document.getElementById('spinner-container')
   if (!spinnerContainer) return
-  
+
   // 清除之前的超时，确保不会重复执行
   if (spinnerRemovalTimeout) {
     clearTimeout(spinnerRemovalTimeout)
   }
-  
+
   // 添加淡出效果
   spinnerContainer.style.opacity = '0'
-  
+
   // 设置一个延迟，在淡出动画完成后移除元素
   spinnerRemovalTimeout = setTimeout(() => {
     if (spinnerContainer.parentNode) {
@@ -92,7 +92,7 @@ const optimizeCriticalPath = () => {
 
   // 添加spinner容器到body
   document.body.appendChild(spinnerContainer)
-  
+
   // 渲染LoadingSpinner到容器
   const spinnerRoot = ReactDOM.createRoot(spinnerContainer)
   spinnerRoot.render(<LoadingSpinner size={50} />)
@@ -103,24 +103,24 @@ const optimizeCriticalPath = () => {
       lazyInit()
 
       // 添加多重保障确保spinner被移除
-      
+
       // 1. 监听 DOMContentLoaded 事件（如果尚未触发）
       if (document.readyState !== 'loading') {
         // 如果DOM已加载，设置一个延迟移除
-        setTimeout(removeSpinner, 2000);
+        setTimeout(removeSpinner, 2000)
       } else {
         document.addEventListener('DOMContentLoaded', () => {
-          setTimeout(removeSpinner, 2000);
-        });
+          setTimeout(removeSpinner, 2000)
+        })
       }
-      
+
       // 2. 监听 load 事件
       window.addEventListener('load', () => {
-        setTimeout(removeSpinner, 1000);
-      });
-      
+        setTimeout(removeSpinner, 1000)
+      })
+
       // 3. 设置一个最终保障的超时
-      setTimeout(removeSpinner, 5000);
+      setTimeout(removeSpinner, 5000)
     },
     { timeout: 1000 }
   )

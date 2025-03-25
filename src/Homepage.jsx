@@ -8,7 +8,6 @@ import { FiArrowUp } from 'react-icons/fi'
 import VideoSection from './Video'
 import Header from './header'
 import { useTheme } from './useTheme'
-import { throttle } from './utils/performanceUtils'
 
 // 使用更精细的代码分割
 const TeaStorySection = lazy(() =>
@@ -51,12 +50,13 @@ export default function Homepage() {
 
   // 进一步优化滚动处理，增加事件选项
   useEffect(() => {
-    const handleScroll = throttle(() => {
+    // 移除throttle，使用简单的函数
+    const handleScroll = () => {
       // 只有在第一渲染后才更新状态，避免不必要的重渲染
       if (!isFirstRender.current) {
         setScrollPosition(window.scrollY)
       }
-    }, 150) // 进一步增加节流时间，减少触发频率
+    }
 
     window.addEventListener('scroll', handleScroll, {
       passive: true,
@@ -119,7 +119,7 @@ export default function Homepage() {
               backdropFilter: 'blur(4px)',
             }}
             icon={<FiArrowUp size={16} />}
-            className='hover:shadow-lg'
+            className='hover:shadow-sm'
           />
         </div>
 
@@ -131,7 +131,7 @@ export default function Homepage() {
           }`}
         >
           <Header />
-          <div className='pt-20'>
+          <div className='pt-32'>
             <div className='relative flex flex-col flex-1'>
               <VideoSection />
             </div>

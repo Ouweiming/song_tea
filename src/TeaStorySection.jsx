@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import Photowall from './Photowall'
 import village1Avif from './assets/village1.avif'
@@ -12,15 +12,9 @@ import AnimatedImage from './components/AnimatedImage'
 import OptimizedImage from './components/OptimizedImage'
 import SectionTitle from './components/SectionTitle'
 import { useTheme } from './useTheme'
-import { detectDeviceCapabilities } from './utils/performanceUtils'
 
 // 封装动画配置为纯对象，避免重渲染时重新创建
 const ANIMATION_PRESETS = {
-  none: {
-    initial: {},
-    whileInView: {},
-    viewport: { once: true },
-  },
   default: {
     initial: { opacity: 0, y: 30 },
     whileInView: { opacity: 1, y: 0 },
@@ -37,55 +31,10 @@ const ANIMATION_PRESETS = {
 
 const TeaStorySection = () => {
   useTheme()
-  const [isLowPerformanceDevice, setIsLowPerformanceDevice] = useState(false)
 
-  // 使用回调优化设备性能检测 - 增加安全访问和默认值
-  const checkDevicePerformance = useCallback(() => {
-    try {
-      // 安全访问capabilities属性，提供默认值避免undefined错误
-      const capabilities = detectDeviceCapabilities() || {
-        isLowEndDevice: false,
-        isReducedMotion: false,
-        shouldOptimizeAnimations: false,
-      }
-
-      // 使用逻辑OR确保即使属性未定义也不会出错
-      return Boolean(
-        capabilities.isLowEndDevice || capabilities.isReducedMotion
-      )
-    } catch (error) {
-      console.warn('设备性能检测失败:', error)
-      // 发生错误时返回默认值false
-      return false
-    }
-  }, [])
-
-  // 减少useEffect依赖，避免重新计算
-  useEffect(() => {
-    // 添加try-catch以确保即使发生错误也不会使组件崩溃
-    try {
-      setIsLowPerformanceDevice(checkDevicePerformance())
-    } catch (error) {
-      console.error('性能设置错误:', error)
-      setIsLowPerformanceDevice(false)
-    }
-  }, [checkDevicePerformance])
-
-  // 根据设备性能选择动画配置，使用缓存避免重复创建
-  const sectionAnimation = useMemo(
-    () =>
-      isLowPerformanceDevice
-        ? ANIMATION_PRESETS.none
-        : ANIMATION_PRESETS.default,
-    [isLowPerformanceDevice]
-  )
-
-  // 同样缓存卡片动画配置
-  const cardAnimation = useMemo(
-    () =>
-      isLowPerformanceDevice ? ANIMATION_PRESETS.none : ANIMATION_PRESETS.card,
-    [isLowPerformanceDevice]
-  )
+  // 直接使用动画配置，不再根据设备性能判断
+  const sectionAnimation = useMemo(() => ANIMATION_PRESETS.default, [])
+  const cardAnimation = useMemo(() => ANIMATION_PRESETS.card, [])
 
   return (
     <section id='tea-story' className='py-16 overflow-hidden md:py-24'>
@@ -99,7 +48,6 @@ const TeaStorySection = () => {
         <motion.section
           className='mb-24'
           {...sectionAnimation}
-          // 添加will-change属性优化GPU提前准备渲染
           style={{ willChange: 'opacity, transform' }}
         >
           {/* 内容保持不变 */}
@@ -123,7 +71,6 @@ const TeaStorySection = () => {
                   avifSrc={village1Avif}
                   webpSrc={village1Webp}
                   alt='古代茶文化'
-                  isLowPerformance={isLowPerformanceDevice}
                   scale={1.03}
                 />
               </div>
@@ -131,19 +78,17 @@ const TeaStorySection = () => {
           </div>
         </motion.section>
 
-        {/* 其余部分保持类似优化，添加will-change和重用动画配置 */}
         <motion.section
           className='mb-24'
           {...sectionAnimation}
           style={{ willChange: 'opacity, transform' }}
         >
-          {/* ... 后花园宋茶的故事部分保持不变 ... */}
           <div className='grid items-center gap-12 md:grid-cols-2'>
             <div className='overflow-hidden shadow-xl rounded-2xl dark:shadow-emerald-900/10'>
               <div className='overflow-hidden bg-gray-100 h-72 dark:bg-gray-800 md:h-80 lg:h-96'>
                 <motion.div
                   className='w-full h-full'
-                  whileHover={isLowPerformanceDevice ? {} : { scale: 1.05 }}
+                  whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.5 }}
                   style={{ willChange: 'transform' }}
                 >
@@ -185,7 +130,6 @@ const TeaStorySection = () => {
             className='mb-10'
           />
           <div className='grid gap-6 md:grid-cols-3'>
-            {/* 优化卡片渲染，减少动画属性计算 */}
             {[
               {
                 icon: (
@@ -244,14 +188,12 @@ const TeaStorySection = () => {
             ].map((card, index) => (
               <motion.div
                 key={`card-${index}`}
-                whileHover={isLowPerformanceDevice ? {} : { y: -5 }}
+                whileHover={{ y: -5 }}
                 transition={{ duration: 0.25 }}
                 className='p-8 border border-gray-200 shadow-lg rounded-xl bg-white/90 dark:border-gray-700 dark:bg-gray-800/90'
                 {...cardAnimation}
                 style={{
-                  willChange: isLowPerformanceDevice
-                    ? 'auto'
-                    : 'transform, opacity',
+                  willChange: 'transform, opacity',
                   transform: 'translateZ(0)',
                 }}
               >

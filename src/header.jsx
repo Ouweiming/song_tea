@@ -29,8 +29,8 @@ import './index.css'
 // 使用我们自定义的hooks
 import { useLocation, useNavigate } from './router-provider'
 import { useTheme } from './useTheme'
-// 从工具文件导入throttle，但确保在代码中使用它
-import { throttle } from './utils/performanceUtils'
+// 删除性能优化工具导入
+// import { throttle } from './utils/performanceUtils'
 
 // 确保React Router知道future标志
 // eslint-disable-next-line no-unused-vars
@@ -470,8 +470,8 @@ const Header = () => {
       initialCheck()
     })
 
-    // 更高效的滚动处理函数 - 增加节流时间从100ms到150ms
-    const handleScroll = throttle(() => {
+    // 更高效的滚动处理函数 - 使用普通函数代替throttle
+    const handleScroll = () => {
       // 防止在导航期间处理滚动
       if (isNavigating) return
 
@@ -519,7 +519,7 @@ const Header = () => {
           setActiveSection('/')
         }
       })
-    }, 150)
+    }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
 
@@ -611,18 +611,7 @@ const Header = () => {
                   alt='后花园庄宋茶'
                   className={`h-10 w-10 sm:h-12 sm:w-12 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
                 />
-                <div
-                  className={
-                    theme === 'dark'
-                      ? 'ml-2 flex items-center text-emerald-300'
-                      : 'ml-2 flex items-center text-emerald-600'
-                  }
-                >
-                  <span className='text-base font-bold sm:text-lg'>
-                    后花园庄
-                  </span>
-                  <span className='ml-1 text-xs'>宋茶</span>
-                </div>
+
               </div>
             </NavbarBrand>
           </NavbarContent>
@@ -670,18 +659,7 @@ const Header = () => {
                   alt='后花园庄宋茶'
                   className={`mr-6 h-14 w-14 transition-opacity duration-300 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
                 />
-                <div
-                  className={
-                    theme === 'dark'
-                      ? 'ml-2 flex items-center text-emerald-300'
-                      : 'ml-2 flex items-center text-emerald-600'
-                  }
-                >
-                  <span className='text-base font-bold sm:text-lg'>
-                    后花园庄
-                  </span>
-                  <span className='ml-1 text-xs'>宋茶</span>
-                </div>
+                
               </div>
             </NavbarBrand>
           </NavbarContent>
