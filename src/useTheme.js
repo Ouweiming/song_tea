@@ -5,33 +5,31 @@ import { ThemeProviderContext } from './theme-context'
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext)
   const [themeState, setThemeState] = useState(context.theme)
-  const [isChanging, setIsChanging] = useState(false)
+  const [localIsChanging, setLocalIsChanging] = useState(false)
   const stateRef = useRef(context.theme)
 
-  // 加入防抖逻辑，避免频繁状态更新
+  // 确保状态同步
   useEffect(() => {
-    // 如果提供者状态已经变化，同步到本地状态
+    // 同步context的主题到本地状态
     if (context.theme !== stateRef.current) {
       stateRef.current = context.theme
       setThemeState(context.theme)
     }
 
-    // 同步切换中状态
-    setIsChanging(context.isChanging || false)
+    setLocalIsChanging(context.isChanging || false)
 
     // 监听主题变化事件
     const handleThemeChange = e => {
+      console.log('Theme change event detected', e.detail) // 添加日志
       const newTheme = e.detail.theme
-      if (newTheme !== stateRef.current) {
-        stateRef.current = newTheme
-        setThemeState(newTheme)
-        setIsChanging(true)
-      }
+      stateRef.current = newTheme
+      setThemeState(newTheme)
+      setLocalIsChanging(true)
     }
 
     // 监听主题变化完成事件
     const handleThemeChangeComplete = () => {
-      setIsChanging(false)
+      setLocalIsChanging(false)
     }
 
     window.addEventListener('theme-changed', handleThemeChange)
@@ -50,10 +48,10 @@ export const useTheme = () => {
     throw new Error('useTheme must be used within a ThemeProvider')
   }
 
-  // 返回增强的状态，包含切换中标志
+  // 确保返回最新状态
   return {
-    ...context,
     theme: themeState,
-    isChangingTheme: isChanging,
+    setTheme: context.setTheme,
+    isChangingTheme: localIsChanging,
   }
 }

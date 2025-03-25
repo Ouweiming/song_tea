@@ -44,15 +44,18 @@ const NavItem = memo(
     handleNavigation,
     theme,
     isNavigating,
+    isThemeChanging, // 添加主题切换状态作为参数
     compact = false,
   }) => {
+    const isItemActive = isActive(item.href);
+    
     return (
       <NavbarItem className='px-0.5 md:px-1 lg:px-2'>
         <motion.a
           href={item.href}
           onClick={e => handleNavigation(item.href, e)}
           className={`nav-link-hover relative whitespace-nowrap px-1 py-1 text-sm font-normal tracking-wide sm:px-1 md:px-2 lg:px-3 xl:px-4 ${
-            isActive(item.href)
+            isItemActive
               ? 'font-medium text-emerald-600 dark:text-emerald-300'
               : theme === 'dark'
                 ? 'text-gray-100'
@@ -60,7 +63,7 @@ const NavItem = memo(
           }`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          aria-current={isActive(item.href) ? 'page' : undefined}
+          aria-current={isItemActive ? 'page' : undefined}
           role='menuitem'
           style={{ willChange: 'transform' }}
           data-navigating={isNavigating ? 'true' : 'false'}
@@ -79,22 +82,33 @@ const NavItem = memo(
             item.name
           )}
 
-          {/* 激活状态指示器 - 简化过渡动画 */}
-          {isActive(item.href) && (
-            <motion.span
-              className={`absolute bottom-0 left-0 h-0.5 w-full ${
-                theme === 'dark' ? 'bg-emerald-300' : 'bg-emerald-600'
-              }`}
-              layoutId={`activeIndicator-${item.href.replace('#', '')}`}
-              transition={{
-                type: 'spring',
-                stiffness: 300,
-                damping: 30,
-                duration: isNavigating ? 0.15 : 0.2,
-              }}
-              style={{ willChange: 'transform' }}
-              aria-hidden='true'
-            />
+          {/* 激活状态指示器 - 使用两种不同的渲染方式：主题切换时使用静态的div，非主题切换时使用motion.span */}
+          {isItemActive && (
+            isThemeChanging ? (
+              /* 主题切换期间使用普通div，避免任何动画 */
+              <div
+                className={`absolute bottom-0 left-0 h-0.5 w-full ${
+                  theme === 'dark' ? 'bg-emerald-300' : 'bg-emerald-600'
+                }`}
+                aria-hidden='true'
+              />
+            ) : (
+              /* 普通导航时使用motion.span */
+              <motion.span
+                className={`absolute bottom-0 left-0 h-0.5 w-full ${
+                  theme === 'dark' ? 'bg-emerald-300' : 'bg-emerald-600'
+                }`}
+                layoutId={`activeIndicator-${item.href.replace('#', '')}`}
+                transition={{
+                  type: 'spring',
+                  stiffness: 300,
+                  damping: 30,
+                  duration: isNavigating ? 0.15 : 0.2,
+                }}
+                style={{ willChange: 'transform' }}
+                aria-hidden='true'
+              />
+            )
           )}
         </motion.a>
       </NavbarItem>
@@ -102,7 +116,7 @@ const NavItem = memo(
   }
 )
 
-// 更新NavItem的PropTypes，添加compact属性
+// 更新NavItem的PropTypes，添加isThemeChanging属性
 NavItem.displayName = 'NavItem'
 NavItem.propTypes = {
   item: PropTypes.shape({
@@ -115,10 +129,11 @@ NavItem.propTypes = {
   handleNavigation: PropTypes.func.isRequired,
   theme: PropTypes.string.isRequired,
   isNavigating: PropTypes.bool,
+  isThemeChanging: PropTypes.bool, // 添加新的prop
   compact: PropTypes.bool,
 }
 
-// 简化主题切换按钮动画效果
+// 优化主题切换按钮动画效果
 const ThemeToggleButton = memo(({ theme, handleToggle }) => {
   return (
     <Button
@@ -126,8 +141,9 @@ const ThemeToggleButton = memo(({ theme, handleToggle }) => {
       variant='light'
       color='success'
       aria-label={theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'}
-      className='rounded-full p-2 transition-all duration-100 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
-      onPress={handleToggle}
+      className='p-2 transition-all duration-100 rounded-full hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
+      onPress={handleToggle} // 改回使用 onPress 而不是 onClick
+      data-current-theme={theme}
     >
       {theme === 'dark' ? (
         <FiSun className='text-emerald-300' size={24} />
@@ -321,58 +337,11 @@ const Header = () => {
 
   // 优化主题切换
   const handleToggle = useCallback(() => {
-    // 保存当前路径
-    const currentPath = location.pathname
+    console.log('Theme toggle clicked, current theme:', theme) // 添加日志
 
-    // 如果正在切换中，直接返回防止连续操作
-    if (isChangingTheme) return
-
-    // 切换主题
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
-
-    // 使用rAF延迟非关键更新，减轻主线程负担
-    if (currentPath === '/' || currentPath === '/Homepage') {
-      // 先重置，减少不必要的渲染
-      requestAnimationFrame(() => {
-        // 使用更轻量的检测方法
-        const detectVisibleSection = () => {
-          // 只检查关键部分，避免重复查询DOM
-          let currentSection = ''
-          const sections = ['tea-story', 'products', 'contact']
-          for (const section of sections) {
-            const element = document.getElementById(section)
-            if (element) {
-              const rect = element.getBoundingClientRect()
-              if (
-                rect.top < window.innerHeight * 0.7 &&
-                rect.bottom > window.innerHeight * 0.3
-              ) {
-                currentSection = `#${section}`
-                break
-              }
-            }
-          }
-
-          // 只有当有变化时才更新状态
-          if (currentSection && currentSection !== activeSection) {
-            setActiveSection(currentSection)
-          } else if (!currentSection && scrollYProgress.get() < 0.15) {
-            setActiveSection('/')
-          }
-        }
-
-        // 延迟执行，给主题切换足够时间完成
-        setTimeout(detectVisibleSection, 150)
-      })
-    }
-  }, [
-    setTheme,
-    location.pathname,
-    setActiveSection,
-    activeSection,
-    scrollYProgress,
-    isChangingTheme,
-  ])
+    // 简化主题切换，去除多余的条件检查
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+  }, [setTheme, theme])
 
   // 优化导航函数 - 添加导航锁定机制
   const handleNavigation = useCallback(
@@ -597,22 +566,27 @@ const Header = () => {
 
   return isPageReady ? (
     <motion.div
-      className='fixed left-0 right-0 top-0 z-50'
+      className='fixed top-0 left-0 right-0 z-50'
       style={{
         backgroundColor: navbarTransforms.background,
         backdropFilter: navbarTransforms.blur,
         willChange: 'backdrop-filter, height',
         transform: 'translateZ(0)', // 添加GPU加速
       }}
+      data-theme-switching={isChangingTheme ? 'true' : 'false'}
     >
       {/* 进度指示器 */}
       <motion.div
         className='absolute bottom-0 left-0 right-0 h-0.5 origin-left bg-gradient-to-r from-emerald-400 to-teal-500'
-        style={{ scaleX, willChange: 'transform' }}
+        style={{
+          scaleX,
+          willChange: 'transform',
+          opacity: 1, // 移除主题切换时的不透明度变化
+        }}
       />
 
       {/* 外层容器，用于居中整个导航栏 */}
-      <div className='container mx-auto px-4'>
+      <div className='container px-4 mx-auto'>
         <NextUINavbar
           ref={headerRef}
           shouldHideOnScroll={false}
@@ -629,7 +603,7 @@ const Header = () => {
           >
             <NavbarBrand className='flex items-center'>
               <div
-                className='flex cursor-pointer flex-row items-center'
+                className='flex flex-row items-center cursor-pointer'
                 onClick={e => handleNavigation('/', e)}
               >
                 <img
@@ -654,7 +628,7 @@ const Header = () => {
           </NavbarContent>
 
           {/* 移动端导航图标 - 右侧显示图标菜单 */}
-          <NavbarContent className='flex-1 justify-end lg:hidden'>
+          <NavbarContent className='justify-end flex-1 lg:hidden'>
             <div className='flex items-center justify-end space-x-1 sm:space-x-2'>
               {menuItems.map((item, index) => (
                 <Button
@@ -665,10 +639,8 @@ const Header = () => {
                   color={isActive(item.href) ? 'success' : 'default'}
                   aria-label={item.name}
                   className='rounded-full'
-                  onClick={e => {
-                    // 使用onClick而不是onPress以确保兼容性
-                    e.preventDefault()
-                    e.stopPropagation()
+                  onPress={e => {
+                    // 更改为 onPress，并确保正确处理事件
                     handleNavigation(item.href, e)
                   }}
                 >
@@ -690,7 +662,7 @@ const Header = () => {
           <NavbarContent className='hidden w-[25%] lg:flex' justify='start'>
             <NavbarBrand className='flex w-full max-w-[220px] items-center'>
               <div
-                className='flex h-full cursor-pointer items-center'
+                className='flex items-center h-full cursor-pointer'
                 onClick={e => handleNavigation('/', e)}
               >
                 <img
@@ -719,7 +691,7 @@ const Header = () => {
             className='hidden md:w-[60%] lg:flex lg:w-[50%]'
             justify='center'
           >
-            <div className='flex w-full items-center justify-center space-x-1 whitespace-nowrap xl:space-x-3'>
+            <div className='flex items-center justify-center w-full space-x-1 whitespace-nowrap xl:space-x-3'>
               {menuItems.map((item, index) => (
                 <NavItem
                   key={`${index}-${theme}`}
@@ -728,6 +700,7 @@ const Header = () => {
                   handleNavigation={handleNavigation}
                   theme={theme}
                   isNavigating={isNavigating}
+                  isThemeChanging={isChangingTheme} // 传递主题切换状态
                   compact={screenSize.isTablet} // 平板使用紧凑模式
                 />
               ))}

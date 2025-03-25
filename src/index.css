@@ -75,6 +75,33 @@
   transition-duration: 200ms;
 }
 
+/* 简化主题切换过渡效果 */
+body,
+.bg-gradient-to-r,
+[class*='bg-'] {
+  transition:
+    background-color 200ms ease,
+    background-image 200ms ease;
+}
+
+/* 简化主题切换时的动画处理 */
+[data-theme-switching='true'] * {
+  /* 仅暂停动画，不阻止过渡 */
+  animation-play-state: paused;
+}
+
+/* 优化主题切换期间的logo淡入淡出 */
+.logo-dark,
+.logo-light {
+  transition: opacity 200ms ease-in-out;
+}
+
+/* 确保滚动位置在主题切换时保持 */
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+}
+
 /* 对比度增强样式 - 移除标题的文本阴影 */
 .text-enhance {
   /* 移除文本阴影 */
@@ -122,8 +149,8 @@
 /* 主题切换保护样式 */
 :root[data-theme-switching='true'] * {
   transition: none !important;
-  animation-duration: 0.001ms !important;
-  animation-delay: -0.001ms !important;
+  animation-duration: 0.001ms;
+  animation-delay: -0.001ms;
   color-scheme: light dark !important;
   contain: paint !important;
   will-change: auto !important;
@@ -319,7 +346,7 @@ p {
 
 /* NavItem特定样式 - 无颜色过渡 */
 .nav-item {
-  transition: transform 0.2s ease !important;
+  transition: transform 0.2s ease !重要;
 }
 
 .nav-item:hover {
