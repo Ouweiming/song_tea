@@ -29,6 +29,7 @@ import './index.css'
 // 使用我们自定义的hooks
 import { useLocation, useNavigate } from './router-provider'
 import { useTheme } from './useTheme'
+
 // 删除性能优化工具导入
 // import { throttle } from './utils/performanceUtils'
 
@@ -47,8 +48,8 @@ const NavItem = memo(
     isThemeChanging, // 添加主题切换状态作为参数
     compact = false,
   }) => {
-    const isItemActive = isActive(item.href);
-    
+    const isItemActive = isActive(item.href)
+
     return (
       <NavbarItem className='px-0.5 md:px-1 lg:px-2'>
         <motion.a
@@ -83,8 +84,8 @@ const NavItem = memo(
           )}
 
           {/* 激活状态指示器 - 使用两种不同的渲染方式：主题切换时使用静态的div，非主题切换时使用motion.span */}
-          {isItemActive && (
-            isThemeChanging ? (
+          {isItemActive &&
+            (isThemeChanging ? (
               /* 主题切换期间使用普通div，避免任何动画 */
               <div
                 className={`absolute bottom-0 left-0 h-0.5 w-full ${
@@ -108,8 +109,7 @@ const NavItem = memo(
                 style={{ willChange: 'transform' }}
                 aria-hidden='true'
               />
-            )
-          )}
+            ))}
         </motion.a>
       </NavbarItem>
     )
@@ -141,7 +141,7 @@ const ThemeToggleButton = memo(({ theme, handleToggle }) => {
       variant='light'
       color='success'
       aria-label={theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'}
-      className='p-2 transition-all duration-100 rounded-full hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
+      className='rounded-full p-2 transition-all duration-100 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
       onPress={handleToggle} // 改回使用 onPress 而不是 onClick
       data-current-theme={theme}
     >
@@ -304,7 +304,7 @@ const Header = () => {
     }
   }, [])
 
-  // 封装滚动函数减少代码重复
+  // 优化滚动函数以避免强制回流
   const scrollToElement = useCallback(href => {
     // 确保href是一个有效的选择器
     if (!href || typeof href !== 'string') return
@@ -317,13 +317,17 @@ const Header = () => {
     try {
       const element = document.querySelector(selector)
       if (element) {
-        // 使用requestAnimationFrame优化性能
+        // 使用RAF确保在正确的时机读取布局信息
         requestAnimationFrame(() => {
+          // 一次性读取所有需要的布局信息
           const headerHeight = headerRef.current?.offsetHeight || 80
-          const elementPosition =
-            element.getBoundingClientRect().top + window.scrollY
-          const offsetPosition = elementPosition - headerHeight
+          const elementBox = element.getBoundingClientRect()
+          const scrollY = window.scrollY
 
+          // 完成所有读取操作后再进行写入操作
+          const offsetPosition = elementBox.top + scrollY - headerHeight
+
+          // 写入操作（滚动）
           window.scrollTo({
             top: offsetPosition,
             behavior: 'smooth',
@@ -409,7 +413,7 @@ const Header = () => {
     ]
   )
 
-  // 优化滚动检测，使用节流减少触发频率并添加方向检测
+  // 优化滚动检测，减少回流
   useEffect(() => {
     // 预先缓存部分选择器和常量，避免在滚动函数中重复创建
     const isHomePage =
@@ -475,24 +479,26 @@ const Header = () => {
       // 防止在导航期间处理滚动
       if (isNavigating) return
 
-      // 立即更新滚动状态 - 这是高优先项
+      // 批量读取操作
       const currentScrollY = window.scrollY
-      if (currentScrollY > 20 !== scrolled) {
-        setScrolled(currentScrollY > 20)
-      }
 
-      // 只在需要时更新activeSection
-      let nearestSection = null // 在handleScroll作用域中声明nearestSection
-
-      // 使用rAF确保在下一帧处理布局计算
+      // 批量更新状态，避免中间重排
       requestAnimationFrame(() => {
-        // 批量读取所有DOM信息，避免引起多次回流
+        // 1. 更新滚动状态
+        if (currentScrollY > 20 !== scrolled) {
+          setScrolled(currentScrollY > 20)
+        }
+
+        // 2. 只在需要时计算和更新activeSection - 用rAF包装避免强制回流
+        let nearestSection = null
+
+        // 批量读取DOM信息，避免交错的读写操作
         const measurements = {}
         for (const [id, element] of Object.entries(sectionRefs)) {
           measurements[id] = element.getBoundingClientRect()
         }
 
-        // 现在一次性计算最近的区域
+        // 基于已获取的信息进行计算，不再触发额外的回流
         let minDistance = Infinity
         for (const [id, rect] of Object.entries(measurements)) {
           const midpoint = rect.top + rect.height / 2
@@ -508,7 +514,7 @@ const Header = () => {
           }
         }
 
-        // 只在需要时更新activeSection
+        // 3. 一次性更新状态
         if (nearestSection && nearestSection !== activeSection) {
           setActiveSection(nearestSection)
         } else if (
@@ -566,7 +572,7 @@ const Header = () => {
 
   return isPageReady ? (
     <motion.div
-      className='fixed top-0 left-0 right-0 z-50'
+      className='fixed left-0 right-0 top-0 z-50'
       style={{
         backgroundColor: navbarTransforms.background,
         backdropFilter: navbarTransforms.blur,
@@ -586,7 +592,7 @@ const Header = () => {
       />
 
       {/* 外层容器，用于居中整个导航栏 */}
-      <div className='container px-4 mx-auto'>
+      <div className='container mx-auto px-4'>
         <NextUINavbar
           ref={headerRef}
           shouldHideOnScroll={false}
@@ -603,21 +609,24 @@ const Header = () => {
           >
             <NavbarBrand className='flex items-center'>
               <div
-                className='flex flex-row items-center cursor-pointer'
+                className='flex cursor-pointer flex-row items-center'
                 onClick={e => handleNavigation('/', e)}
               >
                 <img
                   src={Logo}
                   alt='后花园庄宋茶'
-                  className={`h-10 w-10 sm:h-12 sm:w-12 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
+                  width='56'
+                  height='56'
+                  loading='eager'
+                  decoding='async'
+                  className={`h-14 w-14 sm:h-14 sm:w-14 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
                 />
-
               </div>
             </NavbarBrand>
           </NavbarContent>
 
           {/* 移动端导航图标 - 右侧显示图标菜单 */}
-          <NavbarContent className='justify-end flex-1 lg:hidden'>
+          <NavbarContent className='flex-1 justify-end lg:hidden'>
             <div className='flex items-center justify-end space-x-1 sm:space-x-2'>
               {menuItems.map((item, index) => (
                 <Button
@@ -651,15 +660,18 @@ const Header = () => {
           <NavbarContent className='hidden w-[25%] lg:flex' justify='start'>
             <NavbarBrand className='flex w-full max-w-[220px] items-center'>
               <div
-                className='flex items-center h-full cursor-pointer'
+                className='flex h-full cursor-pointer items-center'
                 onClick={e => handleNavigation('/', e)}
               >
                 <img
                   src={Logo}
                   alt='后花园庄宋茶'
-                  className={`mr-6 h-14 w-14 transition-opacity duration-300 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
+                  width='64'
+                  height='64'
+                  loading='eager'
+                  decoding='async'
+                  className={`mr-6 h-16 w-16 transition-opacity duration-300 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
                 />
-                
               </div>
             </NavbarBrand>
           </NavbarContent>
@@ -669,7 +681,7 @@ const Header = () => {
             className='hidden md:w-[60%] lg:flex lg:w-[50%]'
             justify='center'
           >
-            <div className='flex items-center justify-center w-full space-x-1 whitespace-nowrap xl:space-x-3'>
+            <div className='flex w-full items-center justify-center space-x-1 whitespace-nowrap xl:space-x-3'>
               {menuItems.map((item, index) => (
                 <NavItem
                   key={`${index}-${theme}`}

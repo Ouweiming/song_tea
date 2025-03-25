@@ -1,5 +1,5 @@
 import { motion, useAnimation } from 'framer-motion'
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useState, useCallback } from 'react'
 // 明确导入React
 import { useInView } from 'react-intersection-observer'
 
@@ -97,10 +97,11 @@ const Heart = memo(() => {
     checkPerformance()
   }, [])
 
-  // 简化的resize处理函数，不使用throttle
-  const handleResize = () => {
+  // 优化的resize处理函数
+  const handleResize = useCallback(() => {
+    // 从全局缓存变量获取尺寸，而不是在每次resize时重新计算
     setSize(calculateSize())
-  }
+  }, [])
 
   // 优化ResizeObserver使用
   useEffect(() => {
@@ -108,29 +109,48 @@ const Heart = memo(() => {
     setSize(calculateSize())
 
     if ('ResizeObserver' in window) {
-      // 创建ResizeObserver
+      // 创建ResizeObserver，使用防抖处理
+      let rafId = null
       const resizeObserver = new ResizeObserver(() => {
-        // 使用requestAnimationFrame确保在下一帧渲染前更新
-        requestAnimationFrame(handleResize)
+        // 取消之前的帧请求，实现防抖效果
+        if (rafId) {
+          cancelAnimationFrame(rafId)
+        }
+        
+        // 在下一帧更新大小
+        rafId = requestAnimationFrame(handleResize)
       })
 
       // 只观察根元素
       resizeObserver.observe(document.documentElement)
 
-      return () => resizeObserver.disconnect()
+      return () => {
+        if (rafId) {
+          cancelAnimationFrame(rafId)
+        }
+        resizeObserver.disconnect()
+      }
     } else {
       // 回退方案
+      let rafId = null
       const resizeHandler = () => {
-        requestAnimationFrame(handleResize)
+        // 取消之前的帧请求，实现防抖效果
+        if (rafId) {
+          cancelAnimationFrame(rafId)
+        }
+        rafId = requestAnimationFrame(handleResize)
       }
 
-      window.addEventListener('resize', resizeHandler)
+      window.addEventListener('resize', resizeHandler, { passive: true })
 
       return () => {
+        if (rafId) {
+          cancelAnimationFrame(rafId)
+        }
         window.removeEventListener('resize', resizeHandler)
       }
     }
-  }, [])
+  }, [handleResize])
 
   return (
     <div className='flex items-center justify-center py-2' ref={ref}>

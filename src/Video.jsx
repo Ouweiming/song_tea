@@ -247,11 +247,10 @@ const Welcome = memo(() => {
           <Heart className='mb-3 text-2xl text-emerald-500 dark:text-emerald-400 sm:mb-4 sm:text-3xl md:text-4xl' />
         </motion.div>
 
-      <div>
-      <p className='max-w-xl text-base font-medium leading-relaxed text-gray-700 dark:text-gray-300 sm:max-w-2xl sm:text-lg md:text-xl'>
-            传承千年茶韵，体验自然与传统的完美融合
-      </p>
-      </div>          
+        {/* 添加 text-center 类 */}
+        <p className='max-w-xl mx-auto text-base font-medium leading-relaxed text-center text-gray-700 dark:text-gray-300 sm:max-w-2xl sm:text-lg md:text-xl'>
+          传承千年茶韵，体验自然与传统的完美融合
+        </p>
       </div>
     </div>
   )
