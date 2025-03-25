@@ -2,15 +2,15 @@
  * 初始化性能优化工具
  * 在应用启动时应该尽早调用
  */
-import { betterThrottle, scheduleRead, scheduleWrite } from './domOptimizer'
-import { monitorReflows } from './performanceUtils'
+import { scheduleRead, scheduleWrite, throttle } from './domOptimizer'
+import { batchDomOperations, monitorReflows } from './performanceUtils'
 
 export const initPerformanceOptimizations = () => {
   // 确保即使加载失败也有基本的实现
   const fallbackImplementation = {
     scheduleRead: fn => Promise.resolve(fn()),
     scheduleWrite: fn => Promise.resolve(fn()),
-    betterThrottle: (fn, wait) => {
+    throttle: (fn, wait) => {
       let lastCall = 0
       return function (...args) {
         const now = Date.now()
@@ -26,7 +26,7 @@ export const initPerformanceOptimizations = () => {
     window.domOptimizer = {
       scheduleRead: scheduleRead || fallbackImplementation.scheduleRead,
       scheduleWrite: scheduleWrite || fallbackImplementation.scheduleWrite,
-      betterThrottle: betterThrottle || fallbackImplementation.betterThrottle,
+      throttle: throttle || fallbackImplementation.throttle,
     }
   } catch (error) {
     console.warn('性能优化初始化失败，使用回退实现', error)
@@ -69,34 +69,8 @@ export const initPerformanceOptimizations = () => {
     }
   }
 
-  // 防止某些DOM修改操作导致的布局抖动
-  const batchDomUpdates = updates => {
-    return new Promise(resolve => {
-      requestAnimationFrame(() => {
-        // 读取阶段 - 收集所有需要的DOM测量
-        const measurements = {}
-
-        // 执行所有读取操作
-        for (const update of updates) {
-          if (update.read) {
-            measurements[update.id] = update.read()
-          }
-        }
-
-        // 写入阶段 - 进行所有DOM修改
-        requestAnimationFrame(() => {
-          for (const update of updates) {
-            if (update.write) {
-              update.write(measurements[update.id])
-            }
-          }
-          resolve()
-        })
-      })
-    })
-  }
-
-  window.batchDomUpdates = batchDomUpdates
+  // 使用统一的批量DOM更新函数
+  window.batchDomUpdates = batchDomOperations
 
   // 优化视口变化检测的IntersectionObserver配置
   window.optimizedIntersectionConfig = {

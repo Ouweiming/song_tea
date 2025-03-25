@@ -9,36 +9,6 @@ let pendingWrites = []
 let frameRequested = false
 
 /**
- * 调度DOM读取操作，避免与写入操作交错
- * @param {Function} readFn 读取DOM的函数
- * @returns {Promise}
- */
-export const scheduleRead = readFn => {
-  return new Promise(resolve => {
-    pendingReads.push(() => {
-      const result = readFn()
-      resolve(result)
-    })
-    requestRender()
-  })
-}
-
-/**
- * 调度DOM写入操作，避免强制回流
- * @param {Function} writeFn 写入DOM的函数
- * @returns {Promise}
- */
-export const scheduleWrite = writeFn => {
-  return new Promise(resolve => {
-    pendingWrites.push(() => {
-      writeFn()
-      resolve()
-    })
-    requestRender()
-  })
-}
-
-/**
  * 请求渲染帧(如果尚未请求)
  */
 const requestRender = () => {
@@ -73,39 +43,24 @@ const processFrame = () => {
 }
 
 /**
- * 更高效的节流函数
- * @param {Function} fn 要节流的函数
- * @param {number} wait 等待时间(毫秒)
- * @returns {Function} 节流后的函数
+ * 调度读取操作
+ * @param {Function} fn 读取操作函数
  */
-export const betterThrottle = (fn, wait = 100) => {
-  let lastCall = 0
-  let timeout = null
-  let lastArgs = null
-  let lastThis = null
-
-  const later = () => {
-    lastCall = Date.now()
-    timeout = null
-    fn.apply(lastThis, lastArgs)
-  }
-
-  return function (...args) {
-    const now = Date.now()
-    const remaining = wait - (now - lastCall)
-
-    lastArgs = args
-    lastThis = this
-
-    if (remaining <= 0 || remaining > wait) {
-      if (timeout) {
-        clearTimeout(timeout)
-        timeout = null
-      }
-      lastCall = now
-      fn.apply(this, args)
-    } else if (!timeout) {
-      timeout = setTimeout(later, remaining)
-    }
-  }
+export const scheduleRead = fn => {
+  pendingReads.push(fn)
+  requestRender()
+  return Promise.resolve()
 }
+
+/**
+ * 调度写入操作
+ * @param {Function} fn 写入操作函数
+ */
+export const scheduleWrite = fn => {
+  pendingWrites.push(fn)
+  requestRender()
+  return Promise.resolve()
+}
+
+// 导出其他函数，但指向性能工具中统一的实现
+export { batchDomOperations, debounce, throttle } from './performanceUtils'

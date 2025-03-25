@@ -63,6 +63,18 @@
   --gradient-dark-to: rgb(95, 160, 110);
 }
 
+/* 主题切换过渡效果 */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition-property:
+    background-color, color, border-color, text-decoration-color, fill, stroke,
+    opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
 /* 对比度增强样式 - 移除标题的文本阴影 */
 .text-enhance {
   /* 移除文本阴影 */

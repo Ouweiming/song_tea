@@ -1,16 +1,55 @@
 import { motion } from 'framer-motion'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import PropTypes from 'prop-types'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FiFilter } from 'react-icons/fi'
 
 import ProductCard from './components/ProductCard'
 import SectionTitle from './components/SectionTitle'
 import { filterProductsByCategory, getAllCategories } from './data/products'
-import { throttle } from './utils/domUtils'
+import { createVirtualizedRenderer, throttle } from './utils/performanceUtils'
 
+// 使用memo优化重复列表项渲染
+const CategoryButton = memo(({ category, isActive, onClick }) => (
+  <button
+    onClick={() => onClick(category)}
+    className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+      isActive
+        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
+        : 'bg-white text-gray-700 hover:bg-emerald-100 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
+    }`}
+    aria-pressed={isActive}
+  >
+    {category === 'all' ? '全部' : category}
+  </button>
+))
+
+// 添加缺失的PropTypes验证
+CategoryButton.propTypes = {
+  category: PropTypes.string.isRequired,
+  isActive: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired,
+}
+
+CategoryButton.displayName = 'CategoryButton'
+
+// 使用memo优化筛选器显示
+const FilterIndicator = memo(() => (
+  <div className='flex items-center rounded-full bg-white px-4 py-2 shadow-md dark:bg-gray-800'>
+    <FiFilter className='mr-2 text-emerald-600 dark:text-emerald-400' />
+    <span className='text-sm font-medium text-gray-600 dark:text-gray-300'>
+      筛选：
+    </span>
+  </div>
+))
+
+FilterIndicator.displayName = 'FilterIndicator'
+
+// 主商品列表组件
 const ShoppingCartList = () => {
   const [activeCategory, setActiveCategory] = useState('all')
+  const initialRenderDone = useRef(false)
 
-  // 使用useMemo缓存分类和筛选结果，避免不必要的重新计算
+  // 使用useMemo缓存分类和筛选结果
   const categories = useMemo(() => getAllCategories(), [])
   const filteredProducts = useMemo(
     () => filterProductsByCategory(activeCategory),
@@ -19,73 +58,54 @@ const ShoppingCartList = () => {
 
   const listRef = useRef(null)
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 })
+  const previousRangeRef = useRef({ start: 0, end: 20 })
 
   // 是否需要虚拟滚动
   const needsVirtualScroll = useMemo(
-    () => filteredProducts.length > 20,
+    () => filteredProducts.length > 12, // 降低虚拟滚动阈值，提高性能
     [filteredProducts.length]
   )
 
-  // 优化虚拟滚动逻辑，减少主线程负担
+  // 创建虚拟化渲染器，使用更大的itemHeight以减少重排
+  const virtualizer = useMemo(
+    () => createVirtualizedRenderer({ itemHeight: 300, overscan: 3 }),
+    []
+  )
+
+  // 优化可见项目更新逻辑
   const updateVisibleItems = useCallback(() => {
     if (!listRef.current || !needsVirtualScroll) return
 
-    // 使用更高效的读写分离和性能优化
-    requestAnimationFrame(() => {
-      // 批量读取DOM信息 - 避免强制回流
-      const containerRect = listRef.current.getBoundingClientRect()
-      const viewportHeight = window.innerHeight
-      const scrollY = window.scrollY
-      const itemHeight = 280 // 使用固定高度避免实时计算
+    const range = virtualizer.getVisibleRange(filteredProducts.length, listRef)
+    const prev = previousRangeRef.current
 
-      // 只有当容器在视口中才计算可见区域
-      if (
-        containerRect.bottom < 0 ||
-        containerRect.top > viewportHeight + 500
-      ) {
-        return // 完全不在视口，跳过计算
-      }
+    // 只在范围有足够变化时更新状态，避免微小变化触发更新
+    if (
+      Math.abs(prev.start - range.start) >= 2 ||
+      Math.abs(prev.end - range.end) >= 2
+    ) {
+      previousRangeRef.current = range
+      setVisibleRange(range)
+    }
+  }, [filteredProducts.length, needsVirtualScroll, virtualizer])
 
-      // 计算可见项目的范围
-      const topOffset = Math.max(0, containerRect.top)
-      const buffer = 3 // 缓冲项数量
-
-      const start = Math.max(
-        0,
-        Math.floor((scrollY + topOffset - containerRect.top) / itemHeight) -
-          buffer
-      )
-
-      const end = Math.min(
-        filteredProducts.length,
-        Math.ceil((scrollY + viewportHeight - containerRect.top) / itemHeight) +
-          buffer
-      )
-
-      // 只有当范围变化时才更新状态
-      requestAnimationFrame(() => {
-        setVisibleRange(prev => {
-          if (prev.start === start && prev.end === end) {
-            return prev // 避免不必要的状态更新
-          }
-          return { start, end }
-        })
-      })
-    })
-  }, [filteredProducts.length, needsVirtualScroll])
-
-  // 使用性能管理器优化节流函数
+  // 优化滚动监听
   useEffect(() => {
     if (!needsVirtualScroll) return
 
-    const throttledUpdate = throttle(updateVisibleItems, 100)
+    // 使用更长的节流间隔
+    const throttledUpdate = throttle(updateVisibleItems, 150)
 
-    // 使用passive标志提高滚动性能
     window.addEventListener('scroll', throttledUpdate, { passive: true })
     window.addEventListener('resize', throttledUpdate, { passive: true })
 
     // 初始计算
-    updateVisibleItems()
+    if (!initialRenderDone.current) {
+      requestAnimationFrame(() => {
+        updateVisibleItems()
+        initialRenderDone.current = true
+      })
+    }
 
     return () => {
       window.removeEventListener('scroll', throttledUpdate)
@@ -93,7 +113,7 @@ const ShoppingCartList = () => {
     }
   }, [updateVisibleItems, needsVirtualScroll])
 
-  // 渲染可见项目
+  // 优化渲染可见项目逻辑
   const visibleProducts = useMemo(
     () =>
       needsVirtualScroll
@@ -102,18 +122,24 @@ const ShoppingCartList = () => {
     [filteredProducts, visibleRange.start, visibleRange.end, needsVirtualScroll]
   )
 
-  // 点击筛选按钮的处理函数
+  // 优化分类点击处理函数
   const handleCategoryClick = useCallback(
     category => {
-      if (category === activeCategory) return // 如果点击当前分类，不做任何处理
+      if (category === activeCategory) return
 
       setActiveCategory(category)
-      // 重置可见范围并滚动到顶部
+      // 重置可见范围
+      previousRangeRef.current = { start: 0, end: 20 }
       setVisibleRange({ start: 0, end: 20 })
-      // 滚动到产品区域顶部
-      document
-        .getElementById('products')
-        ?.scrollIntoView({ behavior: 'smooth' })
+
+      // 平滑滚动到产品区域顶部
+      const productsEl = document.getElementById('products')
+      if (productsEl) {
+        productsEl.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }
     },
     [activeCategory]
   )
@@ -121,8 +147,22 @@ const ShoppingCartList = () => {
   // 计算占位高度，保持滚动条的稳定
   const placeholderHeight = useMemo(() => {
     if (!needsVirtualScroll) return 0
-    return Math.max(0, filteredProducts.length - visibleProducts.length) * 280
+    // 使用固定高度计算，避免高度不一致引起跳动
+    return Math.max(0, filteredProducts.length - visibleProducts.length) * 300
   }, [filteredProducts.length, visibleProducts.length, needsVirtualScroll])
+
+  // 计算可见产品索引
+  const getVisibleIndex = useCallback(
+    index => visibleRange.start + index,
+    [visibleRange.start]
+  )
+
+  // 简化的动画配置，减少重绘
+  const fadeInAnimation = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: { duration: 0.3 },
+  }
 
   return (
     <section id='products' className='bg-gray-50 py-16 dark:bg-gray-900/30'>
@@ -142,43 +182,45 @@ const ShoppingCartList = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.3 }}
         >
-          <div className='flex items-center rounded-full bg-white px-4 py-2 shadow-md dark:bg-gray-800'>
-            <FiFilter className='mr-2 text-emerald-600 dark:text-emerald-400' />
-            <span className='text-sm font-medium text-gray-600 dark:text-gray-300'>
-              筛选：
-            </span>
-          </div>
+          <FilterIndicator />
 
           {categories.map(category => (
-            <button
+            <CategoryButton
               key={category}
-              onClick={() => handleCategoryClick(category)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                activeCategory === category
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
-                  : 'bg-white text-gray-700 hover:bg-emerald-100 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              {category === 'all' ? '全部' : category}
-            </button>
+              category={category}
+              isActive={activeCategory === category}
+              onClick={handleCategoryClick}
+            />
           ))}
         </motion.div>
 
-        {/* 产品网格 */}
-        <div className='grid gap-8 sm:grid-cols-2 lg:grid-cols-3' ref={listRef}>
+        {/* 产品网格 - 使用CSS containment优化渲染 */}
+        <div
+          className='grid gap-8 sm:grid-cols-2 lg:grid-cols-3'
+          ref={listRef}
+          style={{
+            contain: 'content',
+            minHeight: needsVirtualScroll ? '500px' : 'auto',
+          }}
+        >
           {visibleProducts.map((product, index) => (
             <ProductCard
-              key={product.id}
+              key={`${product.id}-${getVisibleIndex(index)}`}
               product={product}
               variant='full'
-              delay={index}
+              delay={Math.min(index, 5) * 0.1} // 最多延迟5个产品的动画
+              index={getVisibleIndex(index)}
             />
           ))}
 
           {/* 占位元素，保持滚动条稳定 */}
           {placeholderHeight > 0 && (
             <div
-              style={{ height: placeholderHeight, gridColumn: '1 / -1' }}
+              style={{
+                height: placeholderHeight,
+                gridColumn: '1 / -1',
+                contain: 'strict',
+              }}
               aria-hidden='true'
             />
           )}
@@ -187,9 +229,7 @@ const ShoppingCartList = () => {
         {filteredProducts.length === 0 && (
           <motion.p
             className='py-10 text-center text-gray-500 dark:text-gray-400'
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
+            {...fadeInAnimation}
           >
             该分类下暂无产品
           </motion.p>

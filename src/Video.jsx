@@ -120,7 +120,7 @@ const VideoPlayer = memo(({ url, onReady, onError, onClose }) => {
 
   return (
     <Suspense fallback={null}>
-      <div className='relative h-full w-full'>
+      <div className='relative w-full h-full'>
         <ReactPlayer
           ref={playerRef}
           url={url}
@@ -162,7 +162,7 @@ const VideoPlayer = memo(({ url, onReady, onError, onClose }) => {
         {/* 仅保留错误信息提示，删除加载指示器 */}
         {playerError && (
           <div
-            className='absolute inset-0 z-20 flex items-center justify-center bg-black/75 text-white backdrop-blur-sm'
+            className='absolute inset-0 z-20 flex items-center justify-center text-white bg-black/75 backdrop-blur-sm'
             onClick={e => {
               e.stopPropagation()
               if (onClose) onClose()
@@ -194,10 +194,10 @@ const Welcome = () => {
   // 文本渐变效果动画保持不变
 
   return (
-    <div className='relative w-full overflow-hidden py-12 md:py-16 lg:py-20'>
+    <div className='relative w-full py-12 overflow-hidden md:py-16 lg:py-20'>
       {/* 背景装饰元素保持不变 */}
       <motion.div
-        className='absolute -left-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-500/5 to-teal-300/5 blur-2xl'
+        className='absolute w-48 h-48 rounded-full -left-16 -top-16 bg-gradient-to-br from-emerald-500/5 to-teal-300/5 blur-2xl'
         animate={{
           scale: [1, 1.1], // Change from [1, 1.1, 1] to [1, 1.1]
           opacity: [0.2, 0.3], // Change from [0.2, 0.3, 0.2] to [0.2, 0.3]
@@ -212,7 +212,7 @@ const Welcome = () => {
       />
 
       <motion.div
-        className='absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-gradient-to-tl from-teal-400/5 to-emerald-300/5 blur-2xl'
+        className='absolute w-48 h-48 rounded-full -bottom-24 -right-24 bg-gradient-to-tl from-teal-400/5 to-emerald-300/5 blur-2xl'
         animate={{
           scale: [1, 1.1], // Change from [1, 1.1, 1] to [1, 1.1]
           opacity: [0.15, 0.25], // Change from [0.15, 0.25, 0.15] to [0.15, 0.25]
@@ -226,7 +226,7 @@ const Welcome = () => {
         aria-hidden='true'
       />
 
-      <div className='relative mx-auto flex max-w-4xl flex-col items-center justify-center px-6 text-center'>
+      <div className='relative flex flex-col items-center justify-center max-w-4xl px-6 mx-auto text-center'>
         {/* 装饰元素与描述文本 - 调整字体大小和间距 */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -344,34 +344,18 @@ const VideoBackground = () => {
   const PlayButton = memo(() => (
     <motion.button
       onClick={handleButtonClick}
-      className='group absolute bottom-4 right-4 flex items-center overflow-hidden rounded-full border-none bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3 text-white shadow-lg sm:bottom-6 sm:right-6 sm:px-5 sm:py-4 md:bottom-8 md:right-8'
+      className='absolute flex items-center px-4 py-3 overflow-hidden text-white border-none rounded-full shadow-lg group bottom-4 right-4 bg-gradient-to-r from-emerald-600 to-emerald-500 sm:bottom-6 sm:right-6 sm:px-5 sm:py-4 md:bottom-8 md:right-8'
       aria-label='播放完整视频'
       whileHover={{
         scale: 1.05,
         background: THEME.gradientLight,
       }}
-      whileTap={{ scale: 0.95 }}
       style={{
         willChange: 'transform',
         boxShadow: '0 8px 20px rgba(16, 185, 129, 0.3)',
       }}
     >
       <span className='relative flex items-center justify-center'>
-        {/* 增强的多层动画效果 */}
-        <motion.span
-          className='absolute -inset-3 rounded-full bg-emerald-400 opacity-20 dark:bg-emerald-300 dark:opacity-30'
-          animate={{
-            scale: [1.2, 4.6], // Change from [1.2, 4.6, 1.2] to [1.2, 4.6]
-            opacity: [0.2, 0.3], // Change from [0.2, 0.3, 0.2] to [0.2, 0.3]
-          }}
-          transition={{
-            duration: 4.5, // 稍微缩短动画周期
-            repeat: Infinity,
-            repeatType: 'reverse',
-            ease: 'easeInOut',
-          }}
-        />
-
         <FiPlayCircle className='relative z-10 mr-2 text-2xl text-white sm:text-3xl md:text-4xl' />
       </span>
       <span className='relative z-10 text-sm font-medium tracking-wide sm:text-base md:text-lg'>
@@ -386,10 +370,10 @@ const VideoBackground = () => {
   return (
     <>
       <Welcome />
-      <div className='relative w-full overflow-hidden px-4 lg:px-20'>
+      <div className='relative w-full px-4 overflow-hidden lg:px-20'>
         {/* 简化装饰性背景元素动画 */}
         <motion.div
-          className='absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-gradient-to-r from-emerald-500/10 to-teal-400/10 blur-3xl'
+          className='absolute w-48 h-48 rounded-full -bottom-12 -left-12 bg-gradient-to-r from-emerald-500/10 to-teal-400/10 blur-3xl'
           animate={{
             scale: [1, 1.1, 1],
             opacity: [0.3, 0.4, 0.3],
@@ -403,7 +387,7 @@ const VideoBackground = () => {
         />
 
         <div
-          className='mx-auto rounded-xl border-4 border-emerald-600 p-0 shadow-xl lg:mx-0'
+          className='p-0 mx-auto border-4 shadow-xl rounded-xl border-emerald-600 lg:mx-0'
           style={{
             boxShadow:
               '0 20px 30px rgba(0, 0, 0, 0.07), 0 0 30px rgba(16, 185, 129, 0.15)',
@@ -412,7 +396,7 @@ const VideoBackground = () => {
           <div className='relative w-full overflow-hidden'>
             <div className='relative h-0 pb-[60%] lg:pb-[52%]'>
               {videoError ? (
-                <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-900/90 text-center'>
+                <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 text-center bg-gray-900/90'>
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -428,7 +412,7 @@ const VideoBackground = () => {
               ) : (
                 <>
                   {/* 添加渐变遮罩层，增强视频层次感 */}
-                  <div className='pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/20 to-transparent'></div>
+                  <div className='absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/20 to-transparent'></div>
 
                   <video
                     ref={backgroundVideoRef}
@@ -438,7 +422,7 @@ const VideoBackground = () => {
                     playsInline
                     preload='metadata'
                     alt='Background video'
-                    className='absolute left-0 top-0 z-0 h-full w-full object-cover'
+                    className='absolute top-0 left-0 z-0 object-cover w-full h-full'
                     style={{
                       maxWidth: '100%',
                       willChange: 'transform',
@@ -478,7 +462,7 @@ const VideoBackground = () => {
           >
             {/* 简化提示动画 */}
             <motion.div
-              className='pointer-events-none absolute left-0 right-0 top-6 text-center'
+              className='absolute left-0 right-0 text-center pointer-events-none top-6'
               initial={{ opacity: 0.8 }}
               animate={{ opacity: 0 }}
               transition={{
@@ -486,14 +470,14 @@ const VideoBackground = () => {
                 delay: 1.5,
               }}
             >
-              <div className='inline-block rounded-full bg-black/70 px-4 py-2 text-sm text-white backdrop-blur-sm'>
+              <div className='inline-block px-4 py-2 text-sm text-white rounded-full bg-black/70 backdrop-blur-sm'>
                 点击视频外区域关闭视频
               </div>
             </motion.div>
 
             {/* 优化关闭按钮 */}
             <motion.button
-              className='absolute right-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 sm:right-6 sm:top-6 md:right-8 md:top-8'
+              className='absolute z-50 flex items-center justify-center w-10 h-10 text-white rounded-full right-4 top-4 bg-black/40 backdrop-blur-sm hover:bg-black/60 sm:right-6 sm:top-6 md:right-8 md:top-8'
               onClick={handleDeleteButtonClick}
               initial={{ opacity: 0.8, scale: 1 }} // 直接显示，无隐藏动画
               animate={{ opacity: 1, scale: 1 }}
@@ -521,7 +505,7 @@ const VideoBackground = () => {
 
               {/* 视频纵横比容器 - 美化边框和阴影 */}
               <div
-                className='relative aspect-video w-full overflow-hidden rounded-xl border-4 border-emerald-500/30 bg-black/80 shadow-2xl dark:border-emerald-400/20'
+                className='relative w-full overflow-hidden border-4 shadow-2xl aspect-video rounded-xl border-emerald-500/30 bg-black/80 dark:border-emerald-400/20'
                 style={{
                   boxShadow:
                     '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1)',

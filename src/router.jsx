@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { Suspense, lazy, useEffect, useState } from 'react'
 import {
   Route,
@@ -7,15 +8,7 @@ import {
 } from 'react-router-dom'
 
 import LoadingSpinner from './LoadingSpinner'
-import { routerBasename, routerFutureConfig } from './router-config'
-
-// 确保全局 future 标志设置
-if (typeof window !== 'undefined') {
-  window.__reactRouterFutureFlags = {
-    ...(window.__reactRouterFutureFlags || {}),
-    ...routerFutureConfig,
-  }
-}
+import { routerConfig } from './router-config'
 
 // 预加载关键组件
 const HomePage = lazy(() => import('./Homepage'))
@@ -38,23 +31,15 @@ const router = createBrowserRouter(
         path='/'
         element={<HomePage />}
         // 添加数据预加载选项减少等待
-        loader={() => {
-          // 标记为低优先级预加载
-          return Promise.resolve({})
-        }}
+        loader={() => Promise.resolve({})}
       />
       <Route path='/Homepage' element={<HomePage />} />
     </>
   ),
   {
-    // 使用统一的future标志配置
-    future: {
-      ...routerFutureConfig,
-      // 启用额外的优化选项
-      v7_normalizeFormMethod: true,
-    },
-    // 使用统一的basename
-    basename: routerBasename,
+    // 使用统一的配置
+    future: routerConfig.future,
+    basename: routerConfig.basename,
   }
 )
 
@@ -78,7 +63,6 @@ const Router = () => {
     <Suspense fallback={<LoadingSpinner size={isInitialLoad ? 60 : 40} />}>
       <RouterProvider
         router={router}
-        // 使用更快速的回退UI
         fallbackElement={<LoadingSpinner size={40} />}
       />
     </Suspense>

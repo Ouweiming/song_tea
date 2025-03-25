@@ -27,15 +27,14 @@ import {
 import Logo from './assets/logo.svg'
 import './index.css'
 // 使用我们自定义的hooks
-import { routerFutureConfig } from './router-config'
 import { useLocation, useNavigate } from './router-provider'
 import { useTheme } from './useTheme'
 // 从工具文件导入throttle，但确保在代码中使用它
-import { throttle } from './utils/domUtils'
+import { throttle } from './utils/performanceUtils'
 
 // 确保React Router知道future标志
 // eslint-disable-next-line no-unused-vars
-const routerConfig = routerFutureConfig
+const routerConfig = {}
 
 // 分离并优化导航项组件 - 添加下划线悬停效果
 const NavItem = memo(
@@ -127,7 +126,7 @@ const ThemeToggleButton = memo(({ theme, handleToggle }) => {
       variant='light'
       color='success'
       aria-label={theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'}
-      className='rounded-full p-2 transition-all duration-100 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
+      className='p-2 transition-all duration-100 rounded-full hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
       onPress={handleToggle}
     >
       {theme === 'dark' ? (
@@ -150,16 +149,22 @@ const Header = () => {
   const { setTheme, theme, isChangingTheme } = useTheme()
   const [scrolled, setScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState('')
-  const [, setIsPageReady] = useState(false)
+  const [isPageReady, setIsPageReady] = useState(false)
   const [isNavigating, setIsNavigating] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { scrollYProgress } = useScroll()
   const headerRef = useRef(null)
   const navigationLockTimeRef = useRef(null)
+  const initialCheckDoneRef = useRef(false)
+  // 移除未使用的ThemeReady状态
 
-  // 添加页面加载完成后的准备状态 - 减少等待时间
+  // 立即检查初始滚动位置
   useEffect(() => {
+    // 立即设置初始滚动状态，不等待setTimeout
+    const initialScrollY = window.scrollY || window.pageYOffset
+    setScrolled(initialScrollY > 20)
+
     const timer = setTimeout(() => {
       setIsPageReady(true)
     }, 300) // 从500ms减至300ms以提高响应性
@@ -175,13 +180,20 @@ const Header = () => {
     mass: 0.5,
   })
 
+  // 创建统一的背景色样式函数
+  const getBackgroundColor = useCallback((isDark, transparency) => {
+    return isDark
+      ? `rgba(31, 41, 55, ${transparency})`
+      : `rgba(255, 255, 255, ${transparency})`
+  }, [])
+
   // 修复hooks规则问题：预先创建transform函数
   const backgroundTransform = useTransform(
     scrollYProgress,
     [0, 0.05],
     [
-      theme === 'dark' ? 'rgba(31, 41, 55, 0)' : 'rgba(255, 255, 255, 0)',
-      theme === 'dark' ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+      getBackgroundColor(theme === 'dark', 0),
+      getBackgroundColor(theme === 'dark', 0.95),
     ]
   )
 
@@ -284,7 +296,7 @@ const Header = () => {
       requestAnimationFrame(() => {
         const headerHeight = headerRef.current?.offsetHeight || 80
         const elementPosition =
-          element.getBoundingClientRect().top + window.pageYOffset
+          element.getBoundingClientRect().top + window.scrollY
         const offsetPosition = elementPosition - headerHeight
 
         window.scrollTo({
@@ -315,7 +327,6 @@ const Header = () => {
           // 只检查关键部分，避免重复查询DOM
           let currentSection = ''
           const sections = ['tea-story', 'products', 'contact']
-
           for (const section of sections) {
             const element = document.getElementById(section)
             if (element) {
@@ -434,6 +445,44 @@ const Header = () => {
     // 如果没有找到任何元素，则不继续
     if (Object.keys(sectionRefs).length === 0) return
 
+    // 初始化滚动状态检查
+    const initialCheck = () => {
+      if (initialCheckDoneRef.current) return
+
+      // 找到初始活动区域更高效的滚动处理函数 - 增加节流时间从100ms到150ms
+      const currentScrollY = window.scrollY || window.pageYOffset
+      setScrolled(currentScrollY > 20)
+
+      if (currentScrollY < 100) {
+        setActiveSection('/')
+      } else {
+        // 检查哪个区域在视口中
+        let foundSection = false
+        for (const [id, element] of Object.entries(sectionRefs)) {
+          const rect = element.getBoundingClientRect()
+          if (
+            rect.top < viewportHeight * 0.75 &&
+            rect.bottom > viewportHeight * 0.25
+          ) {
+            setActiveSection(`#${id}`)
+            foundSection = true
+            break
+          }
+        }
+
+        if (!foundSection) {
+          setActiveSection('/')
+        }
+      }
+
+      initialCheckDoneRef.current = true
+    }
+
+    // 页面加载后立即执行初始检查
+    requestAnimationFrame(() => {
+      initialCheck()
+    })
+
     // 更高效的滚动处理函数 - 增加节流时间从100ms到150ms
     const handleScroll = throttle(() => {
       // 防止在导航期间处理滚动
@@ -445,6 +494,9 @@ const Header = () => {
         setScrolled(currentScrollY > 20)
       }
 
+      // 只在需要时更新activeSection
+      let nearestSection = null // 在handleScroll作用域中声明nearestSection
+
       // 使用rAF确保在下一帧处理布局计算
       requestAnimationFrame(() => {
         // 批量读取所有DOM信息，避免引起多次回流
@@ -454,9 +506,7 @@ const Header = () => {
         }
 
         // 现在一次性计算最近的区域
-        let nearestSection = null
         let minDistance = Infinity
-
         for (const [id, rect] of Object.entries(measurements)) {
           const midpoint = rect.top + rect.height / 2
           const distance = Math.abs(midpoint - viewportHeight / 2)
@@ -482,7 +532,7 @@ const Header = () => {
           setActiveSection('/')
         }
       })
-    }, 150) // 提高节流时间以减少处理频率
+    }, 150)
 
     window.addEventListener('scroll', handleScroll, { passive: true })
 
@@ -490,6 +540,7 @@ const Header = () => {
     setTimeout(() => requestAnimationFrame(handleScroll), 100)
 
     return () => {
+      // 清理计时器
       window.removeEventListener('scroll', handleScroll)
     }
   }, [
@@ -526,24 +577,14 @@ const Header = () => {
     }
   }, [])
 
-  return (
+  return isPageReady ? (
     <motion.div
-      ref={headerRef}
+      className='fixed top-0 left-0 right-0 z-50'
       style={{
         backgroundColor: navbarTransforms.background,
         backdropFilter: navbarTransforms.blur,
         willChange: 'backdrop-filter, height',
         transform: 'translateZ(0)', // 添加GPU加速
-      }}
-      className={`fixed left-0 right-0 top-0 z-50 ${
-        scrolled ? 'shadow-lg dark:shadow-gray-900/20' : ''
-      } transition-shadow duration-300`}
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{
-        type: 'spring',
-        stiffness: 50,
-        damping: 15,
       }}
     >
       {/* 进度指示器 */}
@@ -553,8 +594,9 @@ const Header = () => {
       />
 
       {/* 外层容器，用于居中整个导航栏 */}
-      <div className='container mx-auto px-4'>
+      <div className='container px-4 mx-auto'>
         <NextUINavbar
+          ref={headerRef}
           shouldHideOnScroll={false}
           isBordered={false}
           maxWidth='xl'
@@ -564,12 +606,12 @@ const Header = () => {
         >
           {/* 移动端导航区域 - 左侧Logo和右侧图标导航 */}
           <NavbarContent
-            className='w-[50%] sm:w-[40%] md:w-[30%] lg:hidden'
+            className='w-[60%] sm:w-[50%] md:w-[40%] lg:hidden'
             justify='start'
           >
             <NavbarBrand className='flex items-center'>
               <div
-                className='flex cursor-pointer flex-row items-center'
+                className='flex flex-row items-center cursor-pointer'
                 onClick={e => handleNavigation('/', e)}
               >
                 <img
@@ -594,8 +636,8 @@ const Header = () => {
           </NavbarContent>
 
           {/* 移动端导航图标 - 右侧显示图标菜单 */}
-          <NavbarContent className='flex-1 justify-end lg:hidden' justify='end'>
-            <div className='flex items-center space-x-2'>
+          <NavbarContent className='justify-end flex-1 lg:hidden'>
+            <div className='flex items-center justify-end space-x-1 sm:space-x-2'>
               {menuItems.map((item, index) => (
                 <Button
                   key={`mobile-${index}`}
@@ -605,7 +647,10 @@ const Header = () => {
                   color={isActive(item.href) ? 'success' : 'default'}
                   aria-label={item.name}
                   className='rounded-full'
-                  onPress={e => handleNavigation(item.href, e)}
+                  onPress={e => {
+                    e.preventDefault() // 阻止默认行为
+                    handleNavigation(item.href, e)
+                  }}
                 >
                   {React.cloneElement(item.icon, {
                     className: isActive(item.href)
@@ -625,7 +670,7 @@ const Header = () => {
           <NavbarContent className='hidden w-[25%] lg:flex' justify='start'>
             <NavbarBrand className='flex w-full max-w-[220px] items-center'>
               <div
-                className='flex h-full cursor-pointer items-center'
+                className='flex items-center h-full cursor-pointer'
                 onClick={e => handleNavigation('/', e)}
               >
                 <img
@@ -633,6 +678,18 @@ const Header = () => {
                   alt='后花园庄宋茶'
                   className={`mr-6 h-14 w-14 transition-opacity duration-300 ${theme === 'dark' ? 'logo-dark' : 'logo-light'}`}
                 />
+                <div
+                  className={
+                    theme === 'dark'
+                      ? 'ml-2 flex items-center text-emerald-300'
+                      : 'ml-2 flex items-center text-emerald-600'
+                  }
+                >
+                  <span className='text-base font-bold sm:text-lg'>
+                    后花园庄
+                  </span>
+                  <span className='ml-1 text-xs'>宋茶</span>
+                </div>
               </div>
             </NavbarBrand>
           </NavbarContent>
@@ -642,7 +699,7 @@ const Header = () => {
             className='hidden md:w-[60%] lg:flex lg:w-[50%]'
             justify='center'
           >
-            <div className='flex w-full items-center justify-center space-x-1 whitespace-nowrap xl:space-x-3'>
+            <div className='flex items-center justify-center w-full space-x-1 whitespace-nowrap xl:space-x-3'>
               {menuItems.map((item, index) => (
                 <NavItem
                   key={`${index}-${theme}`}
@@ -669,7 +726,7 @@ const Header = () => {
         </NextUINavbar>
       </div>
     </motion.div>
-  )
+  ) : null
 }
 
 Header.displayName = 'Header'

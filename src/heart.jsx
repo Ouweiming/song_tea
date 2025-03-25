@@ -3,8 +3,8 @@ import { memo, useEffect, useMemo, useState } from 'react'
 // 明确导入React
 import { useInView } from 'react-intersection-observer'
 
-// 添加throttle函数导入
-import { throttle } from './utils/domUtils'
+// 更新引用，使用统一的throttle函数
+import { throttle } from './utils/performanceUtils'
 
 // 创建叶子形状的变体
 const teaLeafPath =

@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 
 import { optimizeCssLoading } from './cssLoader'
+// 更新路由导入路径
 import Router from './router'
 import { ThemeProvider } from './theme-provider'
 
