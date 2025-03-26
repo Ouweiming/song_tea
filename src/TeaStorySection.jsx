@@ -37,14 +37,14 @@ const TeaStorySection = () => {
   const cardAnimation = useMemo(() => ANIMATION_PRESETS.card, [])
 
   return (
-    <section id='tea-story' className='py-16 overflow-hidden md:py-24'>
+    <section id='tea-story' className='overflow-hidden py-16 md:py-24'>
       <SectionTitle
         title='宋茶的世界'
         subtitle='探索千年茶文化，体验自然与工艺的完美融合'
         withBackground
         className='mb-16'
       />
-      <div className='container px-4 mx-auto md:px-6'>
+      <div className='container mx-auto px-4 md:px-6'>
         <motion.section
           className='mb-24'
           {...sectionAnimation}
@@ -52,7 +52,7 @@ const TeaStorySection = () => {
         >
           {/* 内容保持不变 */}
           <div className='grid items-center gap-12 md:grid-cols-2'>
-            <div className='order-2 prose max-w-none md:order-1'>
+            <div className='prose order-2 max-w-none md:order-1'>
               <h3 className='mb-6 font-serif text-2xl font-semibold text-emerald-800 dark:text-emerald-300 md:text-3xl lg:text-4xl'>
                 茶，这种神奇的植物，在中国已有数千年的历史
               </h3>
@@ -64,8 +64,8 @@ const TeaStorySection = () => {
                 茶文化传递的不仅是一种饮品，更是一种生活哲学。茶道代表着和、敬、清、寂的精神境界，告诉人们如何在平凡中寻找美好，在忙碌中保持宁静。
               </p>
             </div>
-            <div className='order-1 overflow-hidden shadow-xl rounded-2xl dark:shadow-emerald-900/10 md:order-2'>
-              <div className='overflow-hidden bg-gray-100 h-72 dark:bg-gray-800 md:h-80 lg:h-96'>
+            <div className='order-1 overflow-hidden rounded-2xl shadow-xl dark:shadow-emerald-900/10 md:order-2'>
+              <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800 md:h-80 lg:h-96'>
                 <AnimatedImage
                   src={village1}
                   avifSrc={village1Avif}
@@ -84,10 +84,10 @@ const TeaStorySection = () => {
           style={{ willChange: 'opacity, transform' }}
         >
           <div className='grid items-center gap-12 md:grid-cols-2'>
-            <div className='overflow-hidden shadow-xl rounded-2xl dark:shadow-emerald-900/10'>
-              <div className='overflow-hidden bg-gray-100 h-72 dark:bg-gray-800 md:h-80 lg:h-96'>
+            <div className='overflow-hidden rounded-2xl shadow-xl dark:shadow-emerald-900/10'>
+              <div className='h-72 overflow-hidden bg-gray-100 dark:bg-gray-800 md:h-80 lg:h-96'>
                 <motion.div
-                  className='w-full h-full'
+                  className='h-full w-full'
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.5 }}
                   style={{ willChange: 'transform' }}
@@ -97,7 +97,7 @@ const TeaStorySection = () => {
                     avifSrc={village2Avif}
                     webpSrc={village2Webp}
                     alt='后花园村茶园'
-                    className='object-cover w-full h-full'
+                    className='h-full w-full object-cover'
                     sizes='(max-width: 768px) 100vw, 50vw'
                   />
                 </motion.div>
@@ -190,19 +190,19 @@ const TeaStorySection = () => {
                 key={`card-${index}`}
                 whileHover={{ y: -5 }}
                 transition={{ duration: 0.25 }}
-                className='p-8 border border-gray-200 shadow-lg rounded-xl bg-white/90 dark:border-gray-700 dark:bg-gray-800/90'
+                className='rounded-xl border border-gray-200 bg-white/90 p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800/90'
                 {...cardAnimation}
                 style={{
                   willChange: 'transform, opacity',
                   transform: 'translateZ(0)',
                 }}
               >
-                <div className='inline-flex items-center justify-center mb-4 rounded-full h-14 w-14 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'>
+                <div className='mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'>
                   {card.icon}
                 </div>
-                <h4 className='mb-4 font-serif text-xl font-semibold text-emerald-800 dark:text-emerald-300 md:text-2xl'>
+                <h3 className='mb-4 font-serif text-xl font-semibold text-emerald-800 dark:text-emerald-300 md:text-2xl'>
                   {card.title}
-                </h4>
+                </h3>
                 <p className='text-lg leading-relaxed text-gray-700 dark:text-gray-200'>
                   {card.desc}
                 </p>

@@ -24,10 +24,10 @@ export default {
         '5xl': '3rem',       // 48px
         '6xl': '3.75rem',    // 60px
       },
-      // 配置主字体
+      // 配置主字体 - 更新为系统字体
       fontFamily: {
-        sans: ['Noto Sans SC', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
-        serif: ['Noto Serif SC', 'ui-serif', 'Georgia', 'Cambria', 'Times New Roman', 'Times', 'serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        serif: ['SimSun', '宋体', 'FangSong', '仿宋', 'ui-serif', 'Georgia', 'Cambria', 'Times New Roman', 'Times', 'serif'],
       },
       colors: {
         customgradient1: 'rgb(246, 242, 233)',

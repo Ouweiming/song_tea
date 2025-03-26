@@ -165,14 +165,14 @@ const ContactSection = () => {
               <form onSubmit={handleSubmit} className='space-y-6'>
                 <div>
                   <label
-                    htmlFor='name'
+                    htmlFor='contact-name'
                     className='mb-2 block text-sm font-medium text-gray-200'
                   >
                     您的姓名 <span className='text-emerald-400'>*</span>
                   </label>
                   <input
                     type='text'
-                    id='name'
+                    id='contact-name'
                     name='name'
                     value={formData.name}
                     onChange={handleChange}
@@ -185,14 +185,14 @@ const ContactSection = () => {
 
                 <div>
                   <label
-                    htmlFor='company'
+                    htmlFor='contact-company'
                     className='mb-2 block text-sm font-medium text-gray-200'
                   >
                     公司/机构名称
                   </label>
                   <input
                     type='text'
-                    id='company'
+                    id='contact-company'
                     name='company'
                     value={formData.company}
                     onChange={handleChange}
@@ -204,14 +204,14 @@ const ContactSection = () => {
 
                 <div>
                   <label
-                    htmlFor='email'
+                    htmlFor='contact-email'
                     className='mb-2 block text-sm font-medium text-gray-200'
                   >
                     电子邮箱 <span className='text-emerald-400'>*</span>
                   </label>
                   <input
                     type='email'
-                    id='email'
+                    id='contact-email'
                     name='email'
                     value={formData.email}
                     onChange={handleChange}
@@ -227,13 +227,13 @@ const ContactSection = () => {
 
                 <div>
                   <label
-                    htmlFor='message'
+                    htmlFor='contact-message'
                     className='mb-2 block text-sm font-medium text-gray-200'
                   >
                     咨询内容 <span className='text-emerald-400'>*</span>
                   </label>
                   <textarea
-                    id='message'
+                    id='contact-message'
                     name='message'
                     value={formData.message}
                     onChange={handleChange}
@@ -252,7 +252,7 @@ const ContactSection = () => {
                   <button
                     type='submit'
                     disabled={isSubmitting}
-                    className={`flex items-center justify-center rounded-md bg-emerald-600 px-6 py-3 text-white transition-colors hover:bg-emerald-700 ${isSubmitting ? 'cursor-not-allowed opacity-70' : ''}`}
+                    className={`flex items-center justify-center rounded-md bg-emerald-800 px-6 py-3 text-white transition-colors hover:bg-emerald-900 ${isSubmitting ? 'cursor-not-allowed opacity-70' : ''}`}
                   >
                     {isSubmitting ? (
                       <>

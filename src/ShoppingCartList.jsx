@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import PropTypes from 'prop-types'
-import { memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FiFilter } from 'react-icons/fi'
 
 import ProductCard from './components/ProductCard'
@@ -33,7 +33,7 @@ CategoryButton.displayName = 'CategoryButton'
 
 // 使用memo优化筛选器显示
 const FilterIndicator = memo(() => (
-  <div className='flex items-center px-4 py-2 bg-white rounded-full shadow-md dark:bg-gray-800'>
+  <div className='flex items-center rounded-full bg-white px-4 py-2 shadow-md dark:bg-gray-800'>
     <FiFilter className='mr-2 text-emerald-600 dark:text-emerald-400' />
     <span className='text-sm font-medium text-gray-600 dark:text-gray-300'>
       筛选：
@@ -42,6 +42,115 @@ const FilterIndicator = memo(() => (
 ))
 
 FilterIndicator.displayName = 'FilterIndicator'
+
+// 优化的分类按钮组，减少DOM元素数量
+const CategoryButtonGroup = memo(({ categories, activeCategory, onClick }) => (
+  <div className='flex flex-wrap items-center justify-center gap-3'>
+    {categories.map(category => (
+      <CategoryButton
+        key={category}
+        category={category}
+        isActive={activeCategory === category}
+        onClick={onClick}
+      />
+    ))}
+  </div>
+))
+
+CategoryButtonGroup.propTypes = {
+  categories: PropTypes.array.isRequired,
+  activeCategory: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
+}
+
+CategoryButtonGroup.displayName = 'CategoryButtonGroup'
+
+// 虚拟化列表组件，只渲染可见部分
+const VirtualizedProductList = memo(({ products }) => {
+  const [visibleItems, setVisibleItems] = useState([])
+  const containerRef = useRef(null)
+  const observerRef = useRef(null)
+  const itemsRendered = useRef(new Set()).current
+
+  // 初始只渲染前6个产品（或更少）
+  useEffect(() => {
+    const initialItems = products.slice(0, Math.min(6, products.length))
+    setVisibleItems(initialItems)
+    itemsRendered.clear()
+    initialItems.forEach(item => itemsRendered.add(item.id))
+  }, [products, itemsRendered])
+
+  // 设置交叉观察器来实现按需渲染
+  useEffect(() => {
+    if (containerRef.current) {
+      // 清理旧的观察器
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
+
+      const handleIntersection = entries => {
+        if (
+          entries[0].isIntersecting &&
+          visibleItems.length < products.length
+        ) {
+          // 当容器可见且还有更多产品时，增加渲染的产品数量
+          const nextBatch = products
+            .filter(item => !itemsRendered.has(item.id))
+            .slice(0, 3)
+          if (nextBatch.length > 0) {
+            nextBatch.forEach(item => itemsRendered.add(item.id))
+            setVisibleItems(prev => [...prev, ...nextBatch])
+          }
+        }
+      }
+
+      observerRef.current = new IntersectionObserver(handleIntersection, {
+        root: null,
+        rootMargin: '100px', // 预加载区域
+        threshold: 0.1,
+      })
+
+      observerRef.current.observe(containerRef.current)
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
+    }
+  }, [products, visibleItems, itemsRendered])
+
+  return (
+    <div
+      ref={containerRef}
+      className='grid gap-8 sm:grid-cols-2 lg:grid-cols-3'
+    >
+      {visibleItems.map((product, index) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          variant='full'
+          delay={Math.min(index, 5) * 0.1}
+        />
+      ))}
+
+      {/* 加载指示器，只在还有更多产品时显示 */}
+      {visibleItems.length < products.length && (
+        <div className='col-span-full flex justify-center py-4'>
+          <span className='text-emerald-600 dark:text-emerald-400'>
+            加载更多产品...
+          </span>
+        </div>
+      )}
+    </div>
+  )
+})
+
+VirtualizedProductList.propTypes = {
+  products: PropTypes.array.isRequired,
+}
+
+VirtualizedProductList.displayName = 'VirtualizedProductList'
 
 // 主商品列表组件
 const ShoppingCartList = () => {
@@ -81,8 +190,8 @@ const ShoppingCartList = () => {
   }
 
   return (
-    <section id='products' className='py-16 bg-gray-50 dark:bg-gray-900/30'>
-      <div className='container px-4 mx-auto'>
+    <section id='products' className='bg-gray-50 py-16 dark:bg-gray-900/30'>
+      <div className='container mx-auto px-4'>
         {/* 使用通用标题组件 */}
         <SectionTitle
           title='匠心茗茶'
@@ -90,40 +199,29 @@ const ShoppingCartList = () => {
           withBackground
         />
 
-        {/* 分类筛选 */}
+        {/* 优化的分类筛选 - 合并为单个动画容器 */}
         <motion.div
-          className='flex flex-wrap items-center justify-center gap-3 mb-10'
+          className='mb-10'
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.3 }}
         >
-          <FilterIndicator />
+          <div className='mb-4 flex items-center justify-center'>
+            <FilterIndicator />
+          </div>
 
-          {categories.map(category => (
-            <CategoryButton
-              key={category}
-              category={category}
-              isActive={activeCategory === category}
-              onClick={handleCategoryClick}
-            />
-          ))}
+          <CategoryButtonGroup
+            categories={categories}
+            activeCategory={activeCategory}
+            onClick={handleCategoryClick}
+          />
         </motion.div>
 
-        {/* 产品网格 - 使用CSS containment优化渲染 */}
-        <div className='grid gap-8 sm:grid-cols-2 lg:grid-cols-3'>
-          {filteredProducts.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              variant='full'
-              delay={Math.min(index, 5) * 0.1} // 最多延迟5个产品的动画
-              index={index}
-            />
-          ))}
-        </div>
-
-        {filteredProducts.length === 0 && (
+        {/* 使用虚拟列表代替直接渲染所有产品 */}
+        {filteredProducts.length > 0 ? (
+          <VirtualizedProductList products={filteredProducts} />
+        ) : (
           <motion.p
             className='py-10 text-center text-gray-500 dark:text-gray-400'
             {...fadeInAnimation}

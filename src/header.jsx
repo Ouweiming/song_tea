@@ -91,7 +91,7 @@ const NavItem = memo(
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           aria-current={isItemActive ? 'page' : undefined}
-          role='menuitem'
+          // 移除了 role="menuitem"，在这里不使用菜单角色
           style={{ willChange: 'transform' }}
           data-navigating={isNavigating ? 'true' : 'false'}
           data-active={isItemActive ? 'true' : 'false'}
@@ -627,7 +627,11 @@ const Header = () => {
             className='hidden md:w-[60%] lg:flex lg:w-[50%]'
             justify='center'
           >
-            <div className='flex w-full items-center justify-center space-x-1 whitespace-nowrap xl:space-x-3'>
+            <div
+              className='flex w-full items-center justify-center space-x-1 whitespace-nowrap xl:space-x-3'
+              role='navigation'
+              aria-label='主导航菜单'
+            >
               {menuItems.map((item, index) => (
                 <NavItem
                   key={`${index}-${theme}`}

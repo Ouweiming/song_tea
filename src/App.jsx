@@ -1,12 +1,12 @@
 // App.jsx
 import Router from './router'
-import { ThemeProvider } from './theme-provider'
+import { ThemeInitializer } from './ThemeInitializer'
 
 function App() {
   return (
-    <ThemeProvider defaultTheme='dark' storageKey='vite-ui-theme'>
+    <ThemeInitializer defaultTheme='dark' storageKey='vite-ui-theme'>
       <Router />
-    </ThemeProvider>
+    </ThemeInitializer>
   )
 }
 

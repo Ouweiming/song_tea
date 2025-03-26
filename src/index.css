@@ -34,14 +34,15 @@
   --gradient-light-from: rgb(246, 242, 233);
   --gradient-light-to: rgb(142, 212, 202);
 
-  /* 统一字体设置 - 增大基础字体尺寸 */
+  /* 统一字体设置 - 更新为系统字体 */
   --font-size-base: 18px; /* 增大基础字体尺寸 */
   --font-sans:
-    'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-    'Segoe UI Symbol', 'Noto Color Emoji';
+    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei',
+    'Segoe UI', 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol';
   --font-serif:
-    'Noto Serif SC', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    'SimSun', '宋体', 'FangSong', '仿宋', Georgia, Cambria, 'Times New Roman',
+    Times, serif;
 
   /* 过渡效果基础变量 */
   --transition-fast: 150ms ease;
