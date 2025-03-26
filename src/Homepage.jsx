@@ -5,8 +5,8 @@ import PropTypes from 'prop-types'
 import { Suspense, lazy, memo, useEffect, useRef, useState } from 'react'
 import { FiArrowUp } from 'react-icons/fi'
 
-import Welcome from './Welcome'
 import VideoSection from './Video'
+import Welcome from './Welcome'
 import Header from './header'
 import { useTheme } from './useTheme'
 
@@ -43,6 +43,21 @@ LazyLoadPlaceholder.propTypes = {
 }
 
 LazyLoadPlaceholder.displayName = 'LazyLoadPlaceholder'
+
+// 创建一个通用的懒加载包装器组件
+const LazyLoadSection = ({ children, height = 'h-screen' }) => (
+  <Suspense fallback={<LazyLoadPlaceholder height={height} />}>
+    {children}
+  </Suspense>
+)
+
+// 添加缺失的 PropTypes 验证
+LazyLoadSection.propTypes = {
+  children: PropTypes.node.isRequired,
+  height: PropTypes.string
+}
+
+LazyLoadSection.displayName = 'LazyLoadSection'
 
 export default function Homepage() {
   const { theme } = useTheme()
@@ -132,29 +147,34 @@ export default function Homepage() {
           }`}
         >
           <Header />
-          <div className='pt-32'>
-          <div>
-            <Welcome/>
-          </div>
+          {/* 增加顶部内边距，确保足够的空间将Welcome与其他区域分开 */}
+          <div className='pt-28 md:pt-36 lg:pt-44'>
+            {/* 为Welcome组件添加一个明确的id，便于导航识别 */}
+            <div id='home-welcome' className='pb-16 md:pb-24'>
+              <Welcome />
+            </div>
             <div className='relative flex flex-col flex-1'>
               <VideoSection />
             </div>
 
-            <Suspense fallback={<LazyLoadPlaceholder />}>
-              <TeaStorySection />
-            </Suspense>
+            {/* 增加顶部间距，确保与上面的元素有明确间隔 */}
+            <LazyLoadSection>
+              <div className='mt-8 md:mt-16'>
+                <TeaStorySection />
+              </div>
+            </LazyLoadSection>
 
-            <Suspense fallback={<LazyLoadPlaceholder />}>
+            <LazyLoadSection>
               <ShoppingCartList />
-            </Suspense>
+            </LazyLoadSection>
 
-            <Suspense fallback={<LazyLoadPlaceholder />}>
+            <LazyLoadSection>
               <ContactForm />
-            </Suspense>
+            </LazyLoadSection>
 
-            <Suspense fallback={<LazyLoadPlaceholder height='h-96' />}>
+            <LazyLoadSection height='h-96'>
               <Footer />
-            </Suspense>
+            </LazyLoadSection>
           </div>
         </div>
       </motion.div>

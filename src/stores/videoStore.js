@@ -54,8 +54,8 @@ const useVideoStore = create((set, get) => ({
   handleCloseVideo: () => {
     set({ showVideo: false, isVideoLoaded: false })
   },
-  handleVideoError: error => {
-    console.error('视频加载失败:', error)
+  handleVideoError: () => {
+    // 移除错误对象输出，避免暴露敏感信息
     set({ videoError: true })
   },
   handleVideoReady: () => {

@@ -30,7 +30,7 @@ const ContactSection = () => {
 
     // 模拟表单提交
     setTimeout(() => {
-      console.log('表单提交:', formData)
+      // 移除控制台日志
       setIsSubmitting(false)
       setSubmitSuccess(true)
       setFormData({

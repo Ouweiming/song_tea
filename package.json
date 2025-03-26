@@ -9,7 +9,10 @@
     "lint": "eslint --ext .js,.jsx --ignore-path .gitignore .",
     "preview": "vite preview",
     "homepage": "https://Ouweiming.github.io/ouweiming.github.io",
-    "optimize-images": "node scripts/optimize-images.js"
+    "optimize-images": "node scripts/optimize-images.js",
+    "prebuild": "eslint --ext .js,.jsx --ignore-path .gitignore .",
+    "analyze": "cross-env ANALYZE=true vite build",
+    "test-build": "vite build && serve -s dist"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",

@@ -21,7 +21,7 @@ const ProductCard = ({ product, variant = 'full' }) => {
           avifSrc={product.avifImage}
           webpSrc={product.webpImage}
           alt={product.name}
-          className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'
+          className='object-cover w-full h-full transition-transform duration-500 group-hover:scale-110'
           sizes={
             variant === 'compact'
               ? '(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 25vw'
@@ -29,7 +29,7 @@ const ProductCard = ({ product, variant = 'full' }) => {
           }
           loading='lazy'
         />
-        <div className='absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100'></div>
+        <div className='absolute inset-0 transition-opacity duration-300 opacity-0 bg-gradient-to-t from-black/40 to-transparent group-hover:opacity-100'></div>
       </div>
 
       <div className='p-6'>
@@ -42,7 +42,7 @@ const ProductCard = ({ product, variant = 'full' }) => {
 
         {/* 分类标签 */}
         <div className='flex'>
-          <span className='inline-block rounded-full bg-emerald-100 px-3 py-1 text-base font-medium text-emerald-800 dark:bg-emerald-800/50 dark:text-emerald-200'>
+          <span className='inline-block px-3 py-1 text-base font-medium rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-800/50 dark:text-emerald-200'>
             {product.category}
           </span>
         </div>
@@ -50,7 +50,7 @@ const ProductCard = ({ product, variant = 'full' }) => {
 
       {/* 购买按钮 - 仅在full模式显示 */}
       {variant === 'full' && (
-        <div className='border-t border-gray-200 px-6 py-4 dark:border-gray-700'>
+        <div className='px-6 py-4 border-t border-gray-200 dark:border-gray-700'>
           <Tooltip
             content='暂时无法购买，即将上线'
             color='warning'
@@ -59,10 +59,10 @@ const ProductCard = ({ product, variant = 'full' }) => {
             <div className='w-full'>
               <button
                 disabled
-                className='flex w-full cursor-not-allowed items-center justify-center rounded-lg bg-emerald-500 px-4 py-3 text-base font-bold text-white opacity-70 transition-colors duration-200 dark:bg-emerald-600 dark:text-white md:text-lg'
+                className='flex items-center justify-center w-full px-4 py-3 text-base font-bold text-white transition-colors duration-200 rounded-lg cursor-not-allowed bg-emerald-500 opacity-70 dark:bg-emerald-600 dark:text-white md:text-lg'
               >
                 <FaShoppingCart className='mr-2' /> Taobao
-                <span className='ml-2 rounded-full bg-yellow-500 px-2 py-1 text-xs text-white md:text-sm'>
+                <span className='px-2 py-1 ml-2 text-xs text-white bg-yellow-500 rounded-full md:text-sm'>
                   敬请期待
                 </span>
               </button>
@@ -88,5 +88,15 @@ ProductCard.propTypes = {
   delay: PropTypes.number,
 }
 
+// 添加自定义比较函数，避免不必要的重新渲染
+const areEqual = (prevProps, nextProps) => {
+  // 只有在关键属性变化时才重新渲染
+  return (
+    prevProps.product.id === nextProps.product.id &&
+    prevProps.variant === nextProps.variant &&
+    prevProps.delay === nextProps.delay
+  )
+}
+
 // 使用React.memo包装组件，避免不必要的重新渲染
-export default React.memo(ProductCard)
+export default React.memo(ProductCard, areEqual)

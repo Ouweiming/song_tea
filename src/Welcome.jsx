@@ -1,6 +1,5 @@
 import { motion, useAnimation } from 'framer-motion'
-import { memo, useEffect, useState, useCallback } from 'react'
-// 明确导入React
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useInView } from 'react-intersection-observer'
 
 // 创建叶子形状的变体
@@ -36,24 +35,9 @@ const leafVariants = {
   },
 }
 
-// 提前声明updateSize函数（在useEffect外部）
-const calculateSize = () => {
-  // 根据窗口宽度计算适当的尺寸
-  if (window.innerWidth < 640) {
-    return 70
-  } else if (window.innerWidth < 768) {
-    return 80
-  } else if (window.innerWidth < 1024) {
-    return 100
-  } else {
-    return 120
-  }
-}
-
 // Welcome 组件 - 包含内联的Heart组件
 const Welcome = memo(() => {
   // Heart 组件内联到 Welcome 组件中
-  const [size, setSize] = useState(120) // 默认尺寸小一些
   const controls = useAnimation()
   const [ref, inView] = useInView({
     triggerOnce: false,
@@ -61,6 +45,20 @@ const Welcome = memo(() => {
     rootMargin: '100px', // 提前开始观察
   })
   const [shouldAnimate, setShouldAnimate] = useState(true)
+
+  // 使用useMemo缓存尺寸计算，移除不必要的依赖
+  const size = useMemo(() => {
+    // 根据窗口宽度计算适当的尺寸
+    if (window.innerWidth < 640) {
+      return 70
+    } else if (window.innerWidth < 768) {
+      return 80
+    } else if (window.innerWidth < 1024) {
+      return 100
+    } else {
+      return 120
+    }
+  }, []) // 移除screenWidth依赖，因为我们直接使用window.innerWidth
 
   // 根据元素是否在视图中来控制动画
   useEffect(() => {
@@ -100,15 +98,13 @@ const Welcome = memo(() => {
 
   // 优化的resize处理函数
   const handleResize = useCallback(() => {
-    // 从全局缓存变量获取尺寸，而不是在每次resize时重新计算
-    setSize(calculateSize())
-  }, [])
+    // 这里我们只需要触发size的重新计算，不需要存储screenWidth
+    // 强制重新渲染组件以更新尺寸
+    controls.start(inView ? 'visible' : 'hidden')
+  }, [controls, inView])
 
   // 优化ResizeObserver使用
   useEffect(() => {
-    // 初始化大小
-    setSize(calculateSize())
-
     if ('ResizeObserver' in window) {
       // 创建ResizeObserver，使用防抖处理
       let rafId = null
@@ -117,7 +113,7 @@ const Welcome = memo(() => {
         if (rafId) {
           cancelAnimationFrame(rafId)
         }
-        
+
         // 在下一帧更新大小
         rafId = requestAnimationFrame(handleResize)
       })
@@ -221,30 +217,30 @@ const Welcome = memo(() => {
   )
 
   return (
-    <div className='relative w-full py-12 overflow-hidden md:py-16 lg:py-20'>
+    <div className='relative w-full overflow-hidden py-12 md:py-16 lg:py-20'>
       {/* 背景装饰元素 - 使用预定义的动画配置 */}
       <motion.div
-        className='absolute w-48 h-48 rounded-full -left-16 -top-16 bg-gradient-to-br from-emerald-500/5 to-teal-300/5 blur-2xl'
+        className='absolute -left-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-500/5 to-teal-300/5 blur-2xl'
         animate={backgroundAnimProps.first.animate}
         transition={backgroundAnimProps.first.transition}
         aria-hidden='true'
       />
 
       <motion.div
-        className='absolute w-48 h-48 rounded-full -bottom-32 -right-24 bg-gradient-to-tl from-teal-400/5 to-emerald-300/5 blur-2xl'
+        className='absolute -bottom-32 -right-24 h-48 w-48 rounded-full bg-gradient-to-tl from-teal-400/5 to-emerald-300/5 blur-2xl'
         animate={backgroundAnimProps.second.animate}
         transition={backgroundAnimProps.second.transition}
         aria-hidden='true'
       />
 
-      <div className='relative max-w-4xl px-6 mx-auto text-center'>
+      <div className='relative mx-auto max-w-4xl px-6 text-center'>
         {/* 装饰元素与描述文本 */}
         <motion.div {...textAnimConfig} className='flex flex-col items-center'>
           {renderHeartIcon()}
         </motion.div>
 
         {/* 添加 text-center 类 */}
-        <p className='max-w-xl mx-auto text-base font-medium leading-relaxed text-center text-gray-700 dark:text-gray-300 sm:max-w-2xl sm:text-lg md:text-xl'>
+        <p className='mx-auto max-w-xl text-center text-base font-medium leading-relaxed text-gray-700 dark:text-gray-300 sm:max-w-2xl sm:text-lg md:text-xl'>
           传承千年茶韵，体验自然与传统的完美融合
         </p>
       </div>

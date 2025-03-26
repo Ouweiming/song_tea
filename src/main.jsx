@@ -1,19 +1,12 @@
-import * as React from 'react'
 import ReactDOM from 'react-dom/client'
 
-// 删除性能优化工具导入
-// import './utils/performanceUtils'
 import LoadingSpinner from './LoadingSpinner'
 
 // 延迟导入非关键资源
 const lazyInit = () => {
   import('./App').then(({ default: App }) => {
     const root = ReactDOM.createRoot(document.getElementById('root'))
-    root.render(
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
-    )
+    root.render(<App />)
 
     // App 渲染后立即触发移除 spinner 的操作
     removeSpinner()
@@ -44,7 +37,7 @@ const removeSpinner = () => {
 
 // 创建一个加载优先级管理器
 const optimizeCriticalPath = () => {
-  // 立即添加requestIdleCallback polyfill
+  // 添加requestIdleCallback polyfill
   if (!('requestIdleCallback' in window)) {
     window.requestIdleCallback = cb => {
       const start = Date.now()
@@ -66,7 +59,6 @@ const optimizeCriticalPath = () => {
 
   if (!isBrowserSupported) {
     // 在不支持的浏览器上使用简化版本
-    console.warn('Browser not fully supported, using fallback mode')
     lazyInit()
     return
   }
@@ -102,24 +94,12 @@ const optimizeCriticalPath = () => {
     () => {
       lazyInit()
 
-      // 添加多重保障确保spinner被移除
-
-      // 1. 监听 DOMContentLoaded 事件（如果尚未触发）
-      if (document.readyState !== 'loading') {
-        // 如果DOM已加载，设置一个延迟移除
-        setTimeout(removeSpinner, 2000)
-      } else {
-        document.addEventListener('DOMContentLoaded', () => {
-          setTimeout(removeSpinner, 2000)
-        })
-      }
-
-      // 2. 监听 load 事件
+      // 添加保障确保spinner被移除
       window.addEventListener('load', () => {
         setTimeout(removeSpinner, 1000)
       })
 
-      // 3. 设置一个最终保障的超时
+      // 设置最终保障的超时
       setTimeout(removeSpinner, 5000)
     },
     { timeout: 1000 }

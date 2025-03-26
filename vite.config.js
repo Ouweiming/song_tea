@@ -1,6 +1,5 @@
 import react from '@vitejs/plugin-react';
 import autoprefixer from 'autoprefixer';
-// 修改导入方式：直接导入 tailwindcss
 import tailwindcss from 'tailwindcss';
 import { defineConfig } from 'vite';
 
@@ -14,14 +13,6 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 尝试导入可选插件，如果不存在则使用空对象
-let visualizer;
-try {
-  visualizer = (await import('rollup-plugin-visualizer')).visualizer;
-} catch (e) {
-  visualizer = () => null;
-}
-
 // 尝试导入可选的HTML插件
 let createHtmlPlugin;
 try {
@@ -33,13 +24,11 @@ try {
 // 读取内联关键CSS
 const getCriticalCSS = () => {
   try {
-    // 使用新的 __dirname 变量
     return fs.readFileSync(
       path.resolve(__dirname, 'src/critical.css'),
       'utf-8'
     );
   } catch (e) {
-    // 如果文件不存在，返回空字符串
     return '';
   }
 };
@@ -64,11 +53,6 @@ const createPlugins = () => {
     );
   }
   
-  // 可选：添加bundle分析工具
-  if (visualizer && process.env.ANALYZE) {
-    plugins.push(visualizer({ open: true }));
-  }
-  
   return plugins.filter(Boolean);
 };
 
@@ -76,7 +60,7 @@ export default defineConfig({
   plugins: createPlugins(),
   css: {
     postcss: {
-      plugins: [tailwindcss, autoprefixer], // 直接使用 tailwindcss 插件
+      plugins: [tailwindcss, autoprefixer],
     },
     // 启用CSS代码分割
     modules: {
@@ -85,7 +69,7 @@ export default defineConfig({
         : '[local]_[hash:base64:6]'
     },
     // 提取CSS到单独的文件，便于缓存
-    devSourcemap: true,
+    devSourcemap: false, // 生产环境不需要sourcemap
     // 启用CSS代码分割
     codeSplit: true
   },
@@ -95,12 +79,16 @@ export default defineConfig({
     terserOptions: {
       compress: {
         drop_console: true, // 删除console
-        drop_debugger: true // 删除debugger
+        drop_debugger: true, // 删除debugger
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'] // 移除所有控制台输出函数
       }
     },
     // 优化资源处理
     assetsInlineLimit: 4096, // 小于4kb的资源内联为base64
     chunkSizeWarningLimit: 1000, // 块大小警告限制
+    
+    // 添加报告生成，分析包大小
+    reportCompressedSize: true,
     
     // 打包分块策略
     rollupOptions: {
@@ -130,19 +118,15 @@ export default defineConfig({
         chunkFileNames: 'assets/js/[name]-[hash].js',
         manualChunks: {
           // 修改块配置:
-          // 1. 将React放入框架块，确保它先加载
           'vendor-framework': ['react', 'react-dom', 'react/jsx-runtime'],
-          
-          // 2. 确保framer-motion和其他动画库可以访问React
           'vendor-ui': ['@nextui-org/react', '@nextui-org/theme'],
-          
-          // 3. 移除动画独立分块，或确保其包含React依赖
-          // 'vendor-animation': ['framer-motion', 'gsap', '@gsap/react', '@react-spring/web'],
-          
-          // 4. 其他工具库保持不变
           'vendor-utils': ['react-router-dom', 'react-intersection-observer']
         }
       }
     }
+  },
+  // 添加资源分析选项
+  esbuild: {
+    drop: ['console', 'debugger'], // 使用esbuild也移除console和debugger
   }
 });

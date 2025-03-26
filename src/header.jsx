@@ -36,6 +36,19 @@ import { useTheme } from './useTheme'
 // eslint-disable-next-line no-unused-vars
 const routerConfig = {}
 
+// 将重复的激活状态判断逻辑提取为共享函数
+const isItemActiveCheck = (href, pathname, activeSection) => {
+  if (href === '/') {
+    return (
+      (pathname === '/' || pathname === '/Homepage') &&
+      (activeSection === '/' ||
+        activeSection === '' ||
+        activeSection === '#home-welcome')
+    )
+  }
+  return pathname === href || activeSection === href
+}
+
 // 优化导航项组件 - 使用Zustand高效订阅机制
 const NavItem = memo(
   ({
@@ -52,17 +65,16 @@ const NavItem = memo(
     const location = useLocation()
 
     // 内部计算active状态，使用console标记状态变化
-    const isItemActive = useMemo(() => {
-      const isActive =
-        item.href === '/'
-          ? (location.pathname === '/' || location.pathname === '/Homepage') &&
-            (activeSection === '/' || activeSection === '')
-          : location.pathname === item.href || activeSection === item.href
+    const isItemActive = useMemo(
+      () => isItemActiveCheck(item.href, location.pathname, activeSection),
+      [item.href, location.pathname, activeSection]
+    )
 
-      // 可选：添加日志来跟踪状态变化
-      // console.log(`NavItem ${item.name}: activeSection=${activeSection}, isActive=${isActive}`);
-      return isActive
-    }, [item.href, location.pathname, activeSection])
+    const activeIndicatorStyle = useMemo(() => {
+      return isItemActive
+        ? { opacity: 1 }
+        : { opacity: 0, pointerEvents: 'none' }
+    }, [isItemActive])
 
     return (
       <NavbarItem className='px-0.5 md:px-1 lg:px-2'>
@@ -121,11 +133,7 @@ const NavItem = memo(
                 damping: 30,
                 duration: isNavigating ? 0.3 : 0.2, // 增加导航中的动画时间
               }}
-              style={{
-                willChange: 'transform',
-                opacity: isItemActive ? 1 : 0,
-                pointerEvents: 'none', // 确保指示器不会干扰点击
-              }}
+              style={activeIndicatorStyle}
               aria-hidden='true'
             />
           )}
@@ -159,7 +167,7 @@ const ThemeToggleButton = memo(({ theme, handleToggle }) => {
       variant='light'
       color='success'
       aria-label={theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'}
-      className='p-2 transition-all duration-100 rounded-full hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
+      className='rounded-full p-2 transition-all duration-100 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30'
       onPress={handleToggle} // 改回使用 onPress 而不是 onClick
       data-current-theme={theme}
     >
@@ -325,42 +333,30 @@ const Header = () => {
   // 优化滚动函数，确保元素顶部对齐导航栏底部
   const scrollToElement = useCallback(
     href => {
-      // 确保href是一个有效的选择器
       if (!href || typeof href !== 'string') return
 
-      // 如果是锚点但没有#前缀，添加前缀
       const selector = href.startsWith('#')
         ? href
         : `#${href.replace(/^\/+/, '')}`
 
       try {
         const element = document.querySelector(selector)
-        if (element) {
-          // 使用RAF确保在正确的时机读取布局信息
-          requestAnimationFrame(() => {
-            // 一次性读取所有需要的布局信息
-            const headerHeight = headerRef.current?.offsetHeight || 80
-            const elementBox = element.getBoundingClientRect()
-            const scrollY = window.scrollY
+        if (!element) return
 
-            // 计算目标位置 - 使元素顶部与导航栏底部对齐
-            const offsetPosition = elementBox.top + scrollY - headerHeight
+        const headerHeight = headerRef.current?.offsetHeight || 80
+        const elementBox = element.getBoundingClientRect()
+        const scrollY = window.scrollY
+        const offsetPosition = elementBox.top + scrollY - headerHeight - 10
 
-            // 额外向上偏移一点空间，创建视觉上的呼吸空间 (增加5-20px的空间)
-            const offsetWithMargin = offsetPosition - 10
-
-            // 写入操作（滚动）
-            window.scrollTo({
-              top: offsetWithMargin,
-              behavior: 'smooth',
-            })
-
-            // 手动更新当前活跃部分，确保与滚动目标一致
-            setActiveSection(href)
+        requestAnimationFrame(() => {
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth',
           })
-        }
+          setActiveSection(href)
+        })
       } catch (error) {
-        console.error('Failed to scroll to element', selector, error)
+        console.error('滚动错误:', error)
       }
     },
     [setActiveSection]
@@ -368,13 +364,11 @@ const Header = () => {
 
   // 优化主题切换
   const handleToggle = useCallback(() => {
-    console.log('Theme toggle clicked, current theme:', theme) // 添加日志
-
-    // 简化主题切换，去除多余的条件检查
+    // 移除控制台日志
     setTheme(theme === 'dark' ? 'light' : 'dark')
   }, [setTheme, theme])
 
-  // 优化导航函数 - 通过批处理减少DOM更新
+  // 优化导航函数 - 通过批处理减少DOM更新并修复闪烁问题
   const handleNavigation = useCallback(
     (href, event) => {
       // 接受NextUI的事件对象或普通事件对象
@@ -388,8 +382,14 @@ const Header = () => {
       if (isNavigating) return
 
       // 立即设置导航状态锁定并更新activeSection
-      // 重要：先设置目标section，再设置导航锁定状态
-      setActiveSection(href)
+      // 首页需要特殊处理 - 添加明确标记，防止滚动检测干扰
+      if (href === '/') {
+        setActiveSection('/')
+        // 设置直接导航到首页的标志
+        useHeaderStore.getState().setDirectToHome(true)
+      } else {
+        setActiveSection(href)
+      }
       setIsNavigating(true)
 
       // 清除之前的任何导航锁定计时器
@@ -408,7 +408,9 @@ const Header = () => {
             // 延长导航锁定时间，防止滚动检测干扰指示器
             navigationLockTimeRef.current = setTimeout(() => {
               setIsNavigating(false)
-            }, 1000) // 增加到1000ms
+              // 滚动完成后清除直接导航标志
+              useHeaderStore.getState().setDirectToHome(false)
+            }, 1500) // 增加到1500ms，确保覆盖整个滚动过程
           }, 100)
         } else {
           scrollToElement(href)
@@ -416,7 +418,9 @@ const Header = () => {
           // 设置较长的导航锁定时间
           navigationLockTimeRef.current = setTimeout(() => {
             setIsNavigating(false)
-          }, 1000) // 增加到1000ms
+            // 滚动完成后清除直接导航标志
+            useHeaderStore.getState().setDirectToHome(false)
+          }, 1500) // 增加到1500ms
         }
       } else {
         navigate(href)
@@ -429,7 +433,14 @@ const Header = () => {
         // 页面跳转后解除导航锁定
         navigationLockTimeRef.current = setTimeout(() => {
           setIsNavigating(false)
-        }, 300)
+          // 滚动完成后清除直接导航标志
+          if (href === '/') {
+            // 给予额外时间确保首页导航完成
+            setTimeout(() => {
+              useHeaderStore.getState().setDirectToHome(false)
+            }, 500)
+          }
+        }, 500) // 增加到500ms，确保有足够时间完成导航
       }
     },
     [
@@ -480,8 +491,12 @@ const Header = () => {
         scrollThrottleTimerRef.current = requestAnimationFrame(() => {
           // 确保状态更新是在React批处理中进行
           if (!isNavigating && !isChangingTheme) {
+            // 批量处理DOM读取和状态更新操作
             storeHandleScroll()
-            updatePerfMetrics && updatePerfMetrics('scrollEvents')
+            // 安全地调用updatePerfMetrics
+            if (typeof updatePerfMetrics === 'function') {
+              updatePerfMetrics('scrollEvents')
+            }
           }
           lastScrollTimeRef.current = now
         })
@@ -494,7 +509,10 @@ const Header = () => {
         if (!isNavigating && !isChangingTheme) {
           // 直接触发状态更新
           storeHandleScroll()
-          updatePerfMetrics && updatePerfMetrics('scrollEvents')
+          // 安全地调用updatePerfMetrics
+          if (typeof updatePerfMetrics === 'function') {
+            updatePerfMetrics('scrollEvents')
+          }
         }
       })
     }
@@ -522,7 +540,7 @@ const Header = () => {
 
   return isPageReady ? (
     <motion.div
-      className='fixed top-0 left-0 right-0 z-50'
+      className='fixed left-0 right-0 top-0 z-50'
       style={{
         backgroundColor: navbarTransforms.background,
         backdropFilter: navbarTransforms.blur,
@@ -542,7 +560,7 @@ const Header = () => {
       />
 
       {/* 外层容器，用于居中整个导航栏 */}
-      <div className='container px-4 mx-auto'>
+      <div className='container mx-auto px-4'>
         <NextUINavbar
           ref={headerRef}
           shouldHideOnScroll={false}
@@ -559,7 +577,7 @@ const Header = () => {
           >
             <NavbarBrand className='flex items-center'>
               <div
-                className='flex flex-row items-center cursor-pointer'
+                className='flex cursor-pointer flex-row items-center'
                 onClick={e => handleNavigation('/', e)}
               >
                 {/* 替换为SVG图标组件 */}
@@ -573,7 +591,7 @@ const Header = () => {
           </NavbarContent>
 
           {/* 移动端导航图标 - 右侧显示图标菜单 */}
-          <NavbarContent className='justify-end flex-1 lg:hidden'>
+          <NavbarContent className='flex-1 justify-end lg:hidden'>
             <div className='flex items-center justify-end space-x-1 sm:space-x-2'>
               {menuItems.map((item, index) => (
                 <MobileNavButton
@@ -591,7 +609,7 @@ const Header = () => {
           <NavbarContent className='hidden w-[25%] lg:flex' justify='start'>
             <NavbarBrand className='flex w-full max-w-[220px] items-center'>
               <div
-                className='flex items-center h-full cursor-pointer'
+                className='flex h-full cursor-pointer items-center'
                 onClick={e => handleNavigation('/', e)}
               >
                 {/* 替换为SVG图标组件 */}
@@ -609,7 +627,7 @@ const Header = () => {
             className='hidden md:w-[60%] lg:flex lg:w-[50%]'
             justify='center'
           >
-            <div className='flex items-center justify-center w-full space-x-1 whitespace-nowrap xl:space-x-3'>
+            <div className='flex w-full items-center justify-center space-x-1 whitespace-nowrap xl:space-x-3'>
               {menuItems.map((item, index) => (
                 <NavItem
                   key={`${index}-${theme}`}
@@ -645,16 +663,11 @@ const MobileNavButton = memo(({ item, handleNavigation, theme }) => {
   const activeSection = useHeaderStore(state => state.activeSection)
   const location = useLocation()
 
-  // 内部计算active状态
-  const isActive = useMemo(() => {
-    if (item.href === '/') {
-      return (
-        (location.pathname === '/' || location.pathname === '/Homepage') &&
-        (activeSection === '/' || activeSection === '')
-      )
-    }
-    return location.pathname === item.href || activeSection === item.href
-  }, [item.href, location.pathname, activeSection])
+  // 内部计算active状态 - 与上面保持一致
+  const isActive = useMemo(
+    () => isItemActiveCheck(item.href, location.pathname, activeSection),
+    [item.href, location.pathname, activeSection]
+  )
 
   return (
     <Button
