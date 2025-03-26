@@ -5,6 +5,7 @@ import PropTypes from 'prop-types'
 import { Suspense, lazy, memo, useEffect, useRef, useState } from 'react'
 import { FiArrowUp } from 'react-icons/fi'
 
+import Welcome from './Welcome'
 import VideoSection from './Video'
 import Header from './header'
 import { useTheme } from './useTheme'
@@ -132,6 +133,9 @@ export default function Homepage() {
         >
           <Header />
           <div className='pt-32'>
+          <div>
+            <Welcome/>
+          </div>
             <div className='relative flex flex-col flex-1'>
               <VideoSection />
             </div>

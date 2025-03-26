@@ -50,8 +50,9 @@ const calculateSize = () => {
   }
 }
 
-// 使用memo优化组件
-const Heart = memo(() => {
+// Welcome 组件 - 包含内联的Heart组件
+const Welcome = memo(() => {
+  // Heart 组件内联到 Welcome 组件中
   const [size, setSize] = useState(120) // 默认尺寸小一些
   const controls = useAnimation()
   const [ref, inView] = useInView({
@@ -152,7 +153,43 @@ const Heart = memo(() => {
     }
   }, [handleResize])
 
-  return (
+  // 预定义动画配置，避免每次渲染时重新创建
+  const backgroundAnimProps = {
+    first: {
+      animate: {
+        scale: [1, 1.1],
+        opacity: [0.2, 0.3],
+      },
+      transition: {
+        duration: 10,
+        repeat: Infinity,
+        repeatType: 'reverse',
+        ease: 'easeInOut',
+      },
+    },
+    second: {
+      animate: {
+        scale: [1, 1.1],
+        opacity: [0.15, 0.25],
+      },
+      transition: {
+        duration: 12,
+        repeat: Infinity,
+        repeatType: 'reverse',
+        delay: 1,
+      },
+    },
+  }
+
+  // 预定义文本动画配置
+  const textAnimConfig = {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    transition: { delay: 0.4, duration: 0.6 },
+  }
+
+  // 渲染Heart SVG的函数
+  const renderHeartIcon = () => (
     <div className='flex items-center justify-center py-2' ref={ref}>
       <motion.svg
         width={size}
@@ -182,7 +219,41 @@ const Heart = memo(() => {
       </motion.svg>
     </div>
   )
+
+  return (
+    <div className='relative w-full py-12 overflow-hidden md:py-16 lg:py-20'>
+      {/* 背景装饰元素 - 使用预定义的动画配置 */}
+      <motion.div
+        className='absolute w-48 h-48 rounded-full -left-16 -top-16 bg-gradient-to-br from-emerald-500/5 to-teal-300/5 blur-2xl'
+        animate={backgroundAnimProps.first.animate}
+        transition={backgroundAnimProps.first.transition}
+        aria-hidden='true'
+      />
+
+      <motion.div
+        className='absolute w-48 h-48 rounded-full -bottom-32 -right-24 bg-gradient-to-tl from-teal-400/5 to-emerald-300/5 blur-2xl'
+        animate={backgroundAnimProps.second.animate}
+        transition={backgroundAnimProps.second.transition}
+        aria-hidden='true'
+      />
+
+      <div className='relative max-w-4xl px-6 mx-auto text-center'>
+        {/* 装饰元素与描述文本 */}
+        <motion.div {...textAnimConfig} className='flex flex-col items-center'>
+          {renderHeartIcon()}
+        </motion.div>
+
+        {/* 添加 text-center 类 */}
+        <p className='max-w-xl mx-auto text-base font-medium leading-relaxed text-center text-gray-700 dark:text-gray-300 sm:max-w-2xl sm:text-lg md:text-xl'>
+          传承千年茶韵，体验自然与传统的完美融合
+        </p>
+      </div>
+    </div>
+  )
 })
 
-Heart.displayName = 'Heart'
-export default Heart
+// 添加displayName以便于调试
+Welcome.displayName = 'Welcome'
+
+// 只导出Welcome组件
+export default Welcome
