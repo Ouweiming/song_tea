@@ -21,11 +21,41 @@ import OptimizedImage from './components/OptimizedImage'
 function Photowall() {
   // 创建带有所有格式的图片数组
   const images = [
-    { src: village1, avif: village1Avif, webp: village1Webp },
-    { src: village2, avif: village2Avif, webp: village2Webp },
-    { src: village3, avif: village3Avif, webp: village3Webp },
-    { src: village4, avif: village4Avif, webp: village4Webp },
-    { src: village5, avif: village5Avif, webp: village5Webp },
+    {
+      src: village1,
+      avif: village1Avif,
+      webp: village1Webp,
+      width: 1280,
+      height: 720,
+    },
+    {
+      src: village2,
+      avif: village2Avif,
+      webp: village2Webp,
+      width: 1280,
+      height: 720,
+    },
+    {
+      src: village3,
+      avif: village3Avif,
+      webp: village3Webp,
+      width: 1280,
+      height: 720,
+    },
+    {
+      src: village4,
+      avif: village4Avif,
+      webp: village4Webp,
+      width: 1280,
+      height: 720,
+    },
+    {
+      src: village5,
+      avif: village5Avif,
+      webp: village5Webp,
+      width: 1280,
+      height: 720,
+    },
   ]
   const imageRefs = useRef([])
 
@@ -44,9 +74,11 @@ function Photowall() {
             avifSrc={image.avif}
             webpSrc={image.webp}
             alt={`茶园风光 ${index + 1}`}
-            className='h-96 w-auto rounded-lg object-cover shadow-md transition-all duration-300 ease-out will-change-transform hover:translate-y-[-5px] hover:scale-[1.03] hover:shadow-xl active:translate-y-[2px] active:scale-[0.98] md:w-64 lg:w-96'
+            className='h-96 w-96 rounded-lg object-cover shadow-md transition-all duration-300 ease-out will-change-transform hover:translate-y-[-5px] hover:scale-[1.03] hover:shadow-xl active:translate-y-[2px] active:scale-[0.98] md:w-64 lg:w-96'
             loading='lazy'
             sizes='(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw'
+            width={image.width}
+            height={image.height}
           />
         </div>
       ))}

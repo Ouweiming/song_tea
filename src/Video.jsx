@@ -1,59 +1,54 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import PropTypes from 'prop-types'
-import { Suspense, lazy, memo, useCallback, useEffect, useRef } from 'react'
+import {
+  Suspense,
+  lazy,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { FiPlayCircle, FiX } from 'react-icons/fi'
 
-// 导入 Zustand store
-
-// 导入从heart.jsx中分离的Welcome组件
-
+// 优先使用MP4格式作为最广泛支持的格式
+import video_mp4 from './assets/video.mp4'
+import video_1_mp4 from './assets/video_1.mp4'
 import useVideoStore from './stores/videoStore'
 
-// 仅在需要时动态导入ReactPlayer
-const ReactPlayer = lazy(() => import('react-player'))
+// 延迟加载播放器组件
+const ReactPlayer = lazy(() => import('react-player/lazy'))
 
-// 将频繁创建的样式对象提取出来
-const VIDEO_CONTAINER_STYLE = {
-  contain: 'content',
-}
-
-const VIDEO_BORDER_STYLE = {
-  boxShadow:
-    '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1)',
-  contain: 'layout',
-}
-
-// 使用 memo 优化 VideoPlayer 组件，防止不必要的重渲染
+// 简化VideoPlayer组件
 const VideoPlayer = memo(({ url, onReady, onError, onClose }) => {
-  const playerRef = useRef(null)
-  const videoStore = useVideoStore()
+  const [playerError, setPlayerError] = useState(null)
+  const [hasStarted, setHasStarted] = useState(false)
 
   const handlePlayerReady = useCallback(() => {
-    videoStore.handleVideoReady()
+    setHasStarted(true)
     if (onReady) onReady()
-  }, [onReady, videoStore])
+  }, [onReady])
 
-  const handlePlayerError = useCallback(
+  const handleVideoError = useCallback(
     error => {
-      videoStore.handleVideoError(error)
+      setPlayerError(error)
       if (onError) onError(error)
     },
-    [onError, videoStore]
+    [onError]
   )
 
   return (
     <Suspense fallback={null}>
       <div className='relative h-full w-full'>
         <ReactPlayer
-          ref={playerRef}
           url={url}
           width='100%'
           height='100%'
           controls={true}
-          playing={videoStore.isPlayerReady}
+          playing={hasStarted}
           playsinline
           onReady={handlePlayerReady}
-          onError={handlePlayerError}
+          onError={handleVideoError}
           config={{
             file: {
               attributes: {
@@ -69,10 +64,10 @@ const VideoPlayer = memo(({ url, onReady, onError, onClose }) => {
             top: 0,
             left: 0,
             zIndex: 1,
-            willChange: 'transform',
           }}
         />
-        {videoStore.videoError && (
+
+        {playerError && (
           <div
             className='absolute inset-0 z-20 flex items-center justify-center bg-black/75 text-white backdrop-blur-sm'
             onClick={e => {
@@ -88,10 +83,8 @@ const VideoPlayer = memo(({ url, onReady, onError, onClose }) => {
   )
 })
 
-// 添加显示名称以提高调试体验
 VideoPlayer.displayName = 'VideoPlayer'
 
-// 添加PropTypes验证
 VideoPlayer.propTypes = {
   url: PropTypes.string.isRequired,
   onReady: PropTypes.func,
@@ -99,82 +92,90 @@ VideoPlayer.propTypes = {
   onClose: PropTypes.func,
 }
 
-// 美化的播放按钮组件
-const PlayButton = memo(() => {
-  const { handleOpenVideo } = useVideoStore()
-
-  return (
-    <motion.button
-      onClick={handleOpenVideo}
-      className='group absolute bottom-4 right-4 flex items-center overflow-hidden rounded-full border-none bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3 text-white shadow-lg sm:bottom-6 sm:right-6 sm:px-5 sm:py-4 md:bottom-8 md:right-8'
-      aria-label='播放完整视频'
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      style={{
-        willChange: 'transform',
-        boxShadow: '0 8px 20px rgba(16, 185, 129, 0.3)',
-      }}
-    >
-      <span className='relative flex items-center justify-center'>
-        <FiPlayCircle className='relative z-10 mr-2 text-2xl text-white sm:text-3xl md:text-4xl' />
-      </span>
-      <span className='relative z-10 text-sm font-medium tracking-wide sm:text-base md:text-lg'>
-        <span className='hidden sm:inline'>播放完整视频</span>
-        <span className='sm:hidden'>播放</span>
-      </span>
-    </motion.button>
-  )
-})
+// 提取PlayButton作为独立组件
+const PlayButton = memo(({ onClick }) => (
+  <motion.button
+    onClick={onClick}
+    className='group absolute bottom-4 right-4 flex items-center overflow-hidden rounded-full border-none bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3 text-white shadow-lg sm:bottom-6 sm:right-6 sm:px-5 sm:py-4'
+    aria-label='播放完整视频'
+    whileHover={{ scale: 1.05 }}
+  >
+    <FiPlayCircle className='relative z-10 mr-2 text-2xl text-white sm:text-3xl' />
+    <span className='relative z-10 text-sm font-medium tracking-wide sm:text-base'>
+      <span className='hidden sm:inline'>播放完整视频</span>
+      <span className='sm:hidden'>播放</span>
+    </span>
+  </motion.button>
+))
 
 PlayButton.displayName = 'PlayButton'
+PlayButton.propTypes = {
+  onClick: PropTypes.func.isRequired,
+}
 
 // 优化VideoBackground组件
 const VideoBackground = () => {
   const backgroundVideoRef = useRef(null)
-  const videoContainerRef = useRef(null)
 
   const {
     showVideo,
-    videoError,
     selectedVideo,
-    videoSources,
-    handleCloseVideo,
-    handleVideoReady,
-    handleVideoError,
-    initializeVideo,
+    videoError,
+    openVideo,
+    closeVideo,
+    setSelectedVideo,
+    setVideoError,
+    setIsVideoLoaded,
   } = useVideoStore()
 
+  // 简化视频源配置
+  const videoSource = { src: video_mp4, type: 'video/mp4' }
+
+  // 优化点击处理函数
+  const handleButtonClick = useCallback(
+    e => {
+      e.stopPropagation()
+      openVideo()
+    },
+    [openVideo]
+  )
+
+  const handleDeleteButtonClick = useCallback(
+    e => {
+      if (e) e.stopPropagation()
+      closeVideo()
+    },
+    [closeVideo]
+  )
+
+  const handleVideoReady = useCallback(() => {
+    setIsVideoLoaded(true)
+  }, [setIsVideoLoaded])
+
+  const handleVideoError = useCallback(() => {
+    setVideoError(true)
+  }, [setVideoError])
+
   const handleBackgroundVideoLoadedData = useCallback(() => {
-    requestAnimationFrame(() => {
-      if (
-        backgroundVideoRef.current &&
-        !backgroundVideoRef.current.dataset.initialized
-      ) {
-        backgroundVideoRef.current.playbackRate = 0.8
-        backgroundVideoRef.current.dataset.initialized = 'true'
-      }
-    })
+    if (backgroundVideoRef.current) {
+      backgroundVideoRef.current.playbackRate = 0.8
+    }
   }, [])
 
+  // 默认选择MP4格式
   useEffect(() => {
-    initializeVideo()
-  }, [initializeVideo])
+    setSelectedVideo(video_1_mp4)
+  }, [setSelectedVideo])
 
   return (
     <>
       <div className='relative w-full overflow-hidden px-4 lg:px-20'>
-        {/* 简化装饰性背景元素动画 */}
+        {/* 简化背景元素 */}
         <motion.div
           className='absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-gradient-to-r from-emerald-500/10 to-teal-400/10 blur-3xl'
-          animate={{
-            opacity: [0.3, 0.4, 0.3],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            repeatType: 'reverse',
-          }}
-          style={{ willChange: 'opacity', contain: 'paint' }}
+          initial={{ opacity: 0.3 }}
+          animate={{ opacity: 0.4 }}
+          transition={{ duration: 4 }}
           aria-hidden='true'
         />
 
@@ -189,13 +190,7 @@ const VideoBackground = () => {
             <div className='relative h-0 pb-[60%] lg:pb-[52%]'>
               {videoError ? (
                 <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-900/90 text-center'>
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <FiX className='text-4xl text-red-400' />
-                  </motion.div>
+                  <FiX className='text-4xl text-red-400' />
                   <p className='text-xl font-medium text-white'>视频加载失败</p>
                   <p className='text-sm text-gray-300'>
                     请稍后再试或联系管理员
@@ -203,7 +198,6 @@ const VideoBackground = () => {
                 </div>
               ) : (
                 <>
-                  {/* 添加渐变遮罩层，增强视频层次感 */}
                   <div className='pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/20 to-transparent'></div>
 
                   <video
@@ -214,23 +208,15 @@ const VideoBackground = () => {
                     playsInline
                     preload='metadata'
                     className='absolute left-0 top-0 z-0 h-full w-full object-cover'
-                    style={{
-                      maxWidth: '100%',
-                      willChange: 'transform',
-                      contain: 'content',
-                    }}
                     onError={handleVideoError}
                     onLoadedData={handleBackgroundVideoLoadedData}
                     aria-hidden='true'
                   >
-                    {videoSources.background.map((source, index) => (
-                      <source key={index} src={source.src} type={source.type} />
-                    ))}
+                    <source src={videoSource.src} type={videoSource.type} />
                     您的浏览器不支持视频标签
                   </video>
 
-                  {/* 使用优化后的播放按钮 */}
-                  <PlayButton />
+                  <PlayButton onClick={handleButtonClick} />
                 </>
               )}
             </div>
@@ -238,78 +224,72 @@ const VideoBackground = () => {
         </div>
       </div>
 
-      {/* 点击后显示的视频弹窗 - 增强视觉效果和交互体验 */}
       <AnimatePresence>
         {showVideo && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.25 }}
             className='fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md'
-            onClick={handleCloseVideo}
+            onClick={handleDeleteButtonClick}
             role='dialog'
             aria-modal='true'
             aria-labelledby='video-title'
-            style={{ willChange: 'opacity', contain: 'layout paint' }}
           >
-            {/* 简化提示动画 */}
+            {/* 优化提示动画 - 使用transform避免回流且预先分配空间 */}
             <motion.div
-              className='pointer-events-none absolute left-0 right-0 top-6 text-center'
-              initial={{ opacity: 0.8 }}
-              animate={{ opacity: 0 }}
+              className='pointer-events-none fixed left-0 right-0 top-6 h-10 text-center'
+              initial={{ opacity: 0.8, y: 0 }}
+              animate={{ opacity: 0, y: -10 }}
               transition={{
-                duration: 2,
-                delay: 1,
+                opacity: { duration: 2, delay: 1 },
+                y: { duration: 1.5, delay: 1.5 },
               }}
+              style={{ willChange: 'transform, opacity' }}
             >
               <div className='inline-block rounded-full bg-black/70 px-4 py-2 text-sm text-white backdrop-blur-sm'>
                 点击视频外区域关闭视频
               </div>
             </motion.div>
 
-            {/* 优化关闭按钮 */}
             <motion.button
               className='absolute right-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 sm:right-6 sm:top-6 md:right-8 md:top-8'
-              onClick={handleCloseVideo}
-              initial={{ opacity: 0.8, scale: 1 }}
-              animate={{ opacity: 1, scale: 1 }}
+              onClick={handleDeleteButtonClick}
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
               transition={{ duration: 0.2 }}
               aria-label='关闭视频'
             >
               <FiX size={24} />
             </motion.button>
 
-            {/* 优化视频容器动画 */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              initial={{ scale: 0.97, opacity: 0.5 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.97, opacity: 0 }}
+              transition={{ duration: 0.3 }}
               className='relative mx-auto flex h-auto max-h-[85vh] w-full max-w-[90vw] flex-col justify-center rounded-xl bg-transparent md:max-w-[85vw] lg:max-w-[80vw]'
-              ref={videoContainerRef}
               onClick={e => e.stopPropagation()}
-              style={VIDEO_CONTAINER_STYLE}
+              style={{ willChange: 'transform' }}
             >
               <h2 id='video-title' className='sr-only'>
                 宋茶宣传视频
               </h2>
 
-              {/* 视频纵横比容器 - 美化边框和阴影 */}
               <div
                 className='relative aspect-video w-full overflow-hidden rounded-xl border-4 border-emerald-500/30 bg-black/80 shadow-2xl dark:border-emerald-400/20'
-                style={VIDEO_BORDER_STYLE}
+                style={{
+                  boxShadow:
+                    '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1)',
+                }}
               >
-                {/* 视频播放器 - 仅当selectedVideo有值时才渲染 */}
                 <Suspense fallback={null}>
                   {selectedVideo && (
                     <VideoPlayer
                       url={selectedVideo}
                       onReady={handleVideoReady}
                       onError={handleVideoError}
-                      onClose={handleCloseVideo}
+                      onClose={handleDeleteButtonClick}
                     />
                   )}
                 </Suspense>

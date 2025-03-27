@@ -1,33 +1,84 @@
+// 内联关键组件，避免首屏加载延迟
+import { Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 
 import LoadingSpinner from './LoadingSpinner'
 
-// 延迟导入非关键资源
-const lazyInit = () => {
-  import('./App').then(({ default: App }) => {
-    const root = ReactDOM.createRoot(document.getElementById('root'))
-    root.render(<App />)
+// 内联最小的CSS样式
+const criticalCSS = `
+.app-loading-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+.dark .app-loading-container {
+  background-color: #111827;
+}`
 
-    // App 渲染后立即触发移除 spinner 的操作
-    removeSpinner()
-  })
+// 注入关键CSS到页面头部
+const injectCriticalCSS = () => {
+  if (typeof document !== 'undefined') {
+    const style = document.createElement('style')
+    style.setAttribute('id', 'critical-css')
+    style.innerHTML = criticalCSS
+    document.head.appendChild(style)
+  }
 }
 
-// 创建一个独立的函数来移除 spinner
+// 优化初始化函数 - 将App组件的导入延迟到DOM准备就绪
+const initApp = () => {
+  // 导入App组件并创建根节点
+  import('./App')
+    .then(({ default: App }) => {
+      const root = document.getElementById('root')
+      if (root) {
+        ReactDOM.createRoot(root).render(
+          <Suspense
+            fallback={
+              <div className='app-loading-container'>
+                <LoadingSpinner size={40} />
+              </div>
+            }
+          >
+            <App />
+          </Suspense>
+        )
+      }
+
+      // 移除加载指示器
+      removeSpinner()
+    })
+    .catch(err => {
+      console.error('应用加载失败:', err)
+      // 显示错误信息
+      const root = document.getElementById('root')
+      if (root) {
+        root.innerHTML =
+          '<div style="padding: 2rem; text-align: center;">应用加载出错，请刷新页面重试</div>'
+      }
+      removeSpinner()
+    })
+}
+
+// 移除Spinner函数
 let spinnerRemovalTimeout = null
 const removeSpinner = () => {
   const spinnerContainer = document.getElementById('spinner-container')
   if (!spinnerContainer) return
 
-  // 清除之前的超时，确保不会重复执行
   if (spinnerRemovalTimeout) {
     clearTimeout(spinnerRemovalTimeout)
   }
 
-  // 添加淡出效果
   spinnerContainer.style.opacity = '0'
-
-  // 设置一个延迟，在淡出动画完成后移除元素
   spinnerRemovalTimeout = setTimeout(() => {
     if (spinnerContainer.parentNode) {
       spinnerContainer.parentNode.removeChild(spinnerContainer)
@@ -35,46 +86,23 @@ const removeSpinner = () => {
   }, 300)
 }
 
-// 创建一个加载优先级管理器
+// 使用更简单的方法初始化应用
 const optimizeCriticalPath = () => {
-  // 添加requestIdleCallback polyfill
+  // 注入关键CSS
+  injectCriticalCSS()
+
+  // 简化requestIdleCallback polyfill
   if (!('requestIdleCallback' in window)) {
-    window.requestIdleCallback = cb => {
-      const start = Date.now()
-      return setTimeout(() => {
-        cb({
-          didTimeout: false,
-          timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
-        })
-      }, 1)
-    }
+    window.requestIdleCallback = cb => setTimeout(() => cb(), 1)
     window.cancelIdleCallback = id => clearTimeout(id)
   }
 
-  // 检测浏览器支持
-  const isBrowserSupported =
-    'querySelector' in document &&
-    'addEventListener' in window &&
-    'localStorage' in window
-
-  if (!isBrowserSupported) {
-    // 在不支持的浏览器上使用简化版本
-    lazyInit()
-    return
-  }
-
-  // 创建一个容器用于渲染LoadingSpinner
+  // 创建加载指示器容器
   const spinnerContainer = document.createElement('div')
   spinnerContainer.id = 'spinner-container'
-  spinnerContainer.style.position = 'fixed'
-  spinnerContainer.style.top = '0'
-  spinnerContainer.style.left = '0'
-  spinnerContainer.style.width = '100%'
-  spinnerContainer.style.height = '100%'
-  spinnerContainer.style.zIndex = '9999'
-  spinnerContainer.style.transition = 'opacity 0.3s ease'
+  spinnerContainer.className = 'app-loading-container'
 
-  // 检查root是否存在，不存在就创建
+  // 确保root元素存在
   let rootElement = document.getElementById('root')
   if (!rootElement) {
     rootElement = document.createElement('div')
@@ -82,29 +110,33 @@ const optimizeCriticalPath = () => {
     document.body.appendChild(rootElement)
   }
 
-  // 添加spinner容器到body
+  // 添加spinner容器
   document.body.appendChild(spinnerContainer)
 
-  // 渲染LoadingSpinner到容器
+  // 渲染加载指示器
   const spinnerRoot = ReactDOM.createRoot(spinnerContainer)
   spinnerRoot.render(<LoadingSpinner size={50} />)
 
-  // 使用requestIdleCallback延迟初始化应用
-  requestIdleCallback(
-    () => {
-      lazyInit()
+  // 在空闲时间初始化应用
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => initApp(), { timeout: 2000 })
+  } else {
+    // 兜底方案
+    setTimeout(initApp, 100)
+  }
 
-      // 添加保障确保spinner被移除
-      window.addEventListener('load', () => {
-        setTimeout(removeSpinner, 1000)
-      })
-
-      // 设置最终保障的超时
-      setTimeout(removeSpinner, 5000)
-    },
-    { timeout: 1000 }
-  )
+  // 确保应用最终会加载，即使requestIdleCallback失败
+  setTimeout(() => {
+    const root = document.getElementById('root')
+    if (!root.hasChildNodes()) {
+      initApp()
+    }
+  }, 3000)
 }
 
-// 执行优化
-optimizeCriticalPath()
+// 在页面加载完成后执行
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', optimizeCriticalPath)
+} else {
+  optimizeCriticalPath()
+}

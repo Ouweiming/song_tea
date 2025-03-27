@@ -30,6 +30,8 @@ const ProductCard = ({ product, variant = 'full' }) => {
               : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
           }
           loading='lazy'
+          width={400}
+          height={variant === 'compact' ? 176 : 224}
         />
         {/* 使用类名代替内联样式实现hover效果 */}
         <div className='absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100'></div>
@@ -84,6 +86,8 @@ ProductCard.propTypes = {
     description: PropTypes.string.isRequired,
     category: PropTypes.string.isRequired,
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    width: PropTypes.number, // 添加width属性验证
+    height: PropTypes.number, // 添加height属性验证
   }).isRequired,
   variant: PropTypes.oneOf(['full', 'compact', 'preview']),
   delay: PropTypes.number,

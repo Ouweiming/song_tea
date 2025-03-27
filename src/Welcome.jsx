@@ -1,5 +1,5 @@
 import { motion, useAnimation } from 'framer-motion'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useInView } from 'react-intersection-observer'
 
 // 创建叶子形状的变体
@@ -45,6 +45,49 @@ const Welcome = memo(() => {
     rootMargin: '100px', // 提前开始观察
   })
   const [shouldAnimate, setShouldAnimate] = useState(true)
+  // 添加状态来延迟渲染非关键元素
+  const [showAnimations, setShowAnimations] = useState(false)
+  // 添加文本内容的ref，用于优先级标记
+  const textRef = useRef(null)
+
+  // 优先加载主要内容后，延迟加载动画元素
+  useEffect(() => {
+    // 使用requestIdleCallback等浏览器空闲时再加载动画
+    if ('requestIdleCallback' in window) {
+      const idleId = window.requestIdleCallback(
+        () => {
+          setShowAnimations(true)
+        },
+        { timeout: 2000 }
+      ) // 2秒超时保证最终会加载
+
+      return () => {
+        if ('cancelIdleCallback' in window) {
+          window.cancelIdleCallback(idleId)
+        }
+      }
+    } else {
+      // 降级方案
+      const timeoutId = setTimeout(() => {
+        setShowAnimations(true)
+      }, 100)
+
+      return () => clearTimeout(timeoutId)
+    }
+  }, [])
+
+  // 当组件挂载完成后，标记LCP元素已可见
+  useEffect(() => {
+    if (textRef.current && 'LargestContentfulPaint' in window) {
+      // 通知浏览器这是LCP元素
+      const observer = new PerformanceObserver(entryList => {
+        const entries = entryList.getEntries()
+        const lastEntry = entries[entries.length - 1]
+        console.log('LCP:', lastEntry.element, lastEntry.startTime)
+      })
+      observer.observe({ type: 'largest-contentful-paint', buffered: true })
+    }
+  }, [])
 
   // 使用useMemo缓存尺寸计算，移除不必要的依赖
   const size = useMemo(() => {
@@ -60,8 +103,10 @@ const Welcome = memo(() => {
     }
   }, []) // 移除screenWidth依赖，因为我们直接使用window.innerWidth
 
-  // 根据元素是否在视图中来控制动画
+  // 根据元素是否在视图中来控制动画 - 推迟执行
   useEffect(() => {
+    if (!showAnimations) return // 只在动画元素准备好后执行
+
     if (inView) {
       // 先执行一次标准动画
       controls.start('visible').then(() => {
@@ -77,7 +122,7 @@ const Welcome = memo(() => {
     return () => {
       controls.stop()
     }
-  }, [controls, inView, shouldAnimate])
+  }, [controls, inView, shouldAnimate, showAnimations])
 
   // 减少CPU密集型动画
   useEffect(() => {
@@ -103,8 +148,10 @@ const Welcome = memo(() => {
     controls.start(inView ? 'visible' : 'hidden')
   }, [controls, inView])
 
-  // 优化ResizeObserver使用
+  // 优化ResizeObserver使用 - 推迟执行
   useEffect(() => {
+    if (!showAnimations) return // 只在动画元素准备好后添加
+
     if ('ResizeObserver' in window) {
       // 创建ResizeObserver，使用防抖处理
       let rafId = null
@@ -147,7 +194,7 @@ const Welcome = memo(() => {
         window.removeEventListener('resize', resizeHandler)
       }
     }
-  }, [handleResize])
+  }, [handleResize, showAnimations])
 
   // 预定义动画配置，避免每次渲染时重新创建
   const backgroundAnimProps = {
@@ -177,70 +224,84 @@ const Welcome = memo(() => {
     },
   }
 
-  // 预定义文本动画配置
-  const textAnimConfig = {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0 },
-    transition: { delay: 0.4, duration: 0.6 },
+  // 渲染Heart SVG的函数 - 条件渲染
+  const renderHeartIcon = () => {
+    // 如果还未准备好显示动画，返回静态版本或null
+    if (!showAnimations) {
+      return (
+        <div className='flex h-[120px] items-center justify-center py-2'></div>
+      )
+    }
+
+    return (
+      <div className='flex items-center justify-center py-2' ref={ref}>
+        <motion.svg
+          width={size}
+          height={size}
+          viewBox='0 0 24 24'
+          initial='hidden'
+          animate={controls}
+          className='drop-shadow-md filter'
+          style={{
+            willChange: 'transform, opacity',
+          }}
+          aria-hidden='true'
+        >
+          <defs>
+            <linearGradient id='teaLeafGradient' x1='0%' y1='0%' x2='100%'>
+              <stop offset='0%' stopColor='#4ade80' />
+              <stop offset='100%' stopColor='#10b981' />
+            </linearGradient>
+          </defs>
+          <motion.path
+            fill='url(#teaLeafGradient)'
+            d={teaLeafPath}
+            custom={0} // 传递自定义索引
+            variants={leafVariants}
+            style={{ transformOrigin: 'center' }}
+          />
+        </motion.svg>
+      </div>
+    )
   }
 
-  // 渲染Heart SVG的函数
-  const renderHeartIcon = () => (
-    <div className='flex items-center justify-center py-2' ref={ref}>
-      <motion.svg
-        width={size}
-        height={size}
-        viewBox='0 0 24 24'
-        initial='hidden'
-        animate={controls}
-        className='drop-shadow-md filter'
-        style={{
-          willChange: 'transform, opacity',
-        }}
-        aria-hidden='true'
-      >
-        <defs>
-          <linearGradient id='teaLeafGradient' x1='0%' y1='0%' x2='100%'>
-            <stop offset='0%' stopColor='#4ade80' />
-            <stop offset='100%' stopColor='#10b981' />
-          </linearGradient>
-        </defs>
-        <motion.path
-          fill='url(#teaLeafGradient)'
-          d={teaLeafPath}
-          custom={0} // 传递自定义索引
-          variants={leafVariants}
-          style={{ transformOrigin: 'center' }}
-        />
-      </motion.svg>
-    </div>
-  )
-
   return (
-    <div className='relative w-full overflow-hidden py-12 md:py-16 lg:py-20'>
-      {/* 背景装饰元素 - 使用预定义的动画配置 */}
-      <motion.div
-        className='absolute -left-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-500/5 to-teal-300/5 blur-2xl'
-        animate={backgroundAnimProps.first.animate}
-        transition={backgroundAnimProps.first.transition}
-        aria-hidden='true'
-      />
+    <div
+      className='relative w-full py-12 overflow-hidden md:py-16 lg:py-20'
+      id='home-welcome'
+    >
+      {/* 背景装饰元素 - 条件渲染 */}
+      {showAnimations && (
+        <>
+          <motion.div
+            className='absolute w-48 h-48 rounded-full -left-16 -top-16 bg-gradient-to-br from-emerald-500/5 to-teal-300/5 blur-2xl'
+            animate={backgroundAnimProps.first.animate}
+            transition={backgroundAnimProps.first.transition}
+            aria-hidden='true'
+          />
 
-      <motion.div
-        className='absolute -bottom-32 -right-24 h-48 w-48 rounded-full bg-gradient-to-tl from-teal-400/5 to-emerald-300/5 blur-2xl'
-        animate={backgroundAnimProps.second.animate}
-        transition={backgroundAnimProps.second.transition}
-        aria-hidden='true'
-      />
+          <motion.div
+            className='absolute w-48 h-48 rounded-full -bottom-32 -right-24 bg-gradient-to-tl from-teal-400/5 to-emerald-300/5 blur-2xl'
+            animate={backgroundAnimProps.second.animate}
+            transition={backgroundAnimProps.second.transition}
+            aria-hidden='true'
+          />
+        </>
+      )}
 
-      <div className='relative mx-auto max-w-4xl px-6 text-center'>
-        {/* 装饰元素与描述文本 */}
-        <motion.div {...textAnimConfig} className='flex flex-col items-center'>
-          {renderHeartIcon()}
-        </motion.div>
+      <div className='relative max-w-4xl px-6 mx-auto text-center'>
+        {/* 装饰元素与描述文本 - 优先渲染文本 */}
+        {renderHeartIcon()}
 
-        {/* 添加 text-center 类 */}
-        <p className='mx-auto max-w-xl text-center text-base font-medium leading-relaxed text-gray-700 dark:text-gray-300 sm:max-w-2xl sm:text-lg md:text-xl'>
+        {/* 将文本提前渲染并添加ref以作为LCP指标元素 - 修正fetchPriority属性名 */}
+        <p
+          ref={textRef}
+          className='max-w-xl mx-auto text-base font-medium leading-relaxed text-center text-gray-700 dark:text-gray-300 sm:max-w-2xl sm:text-lg md:text-xl'
+          data-lcp='true'
+          style={{ contentVisibility: 'auto' }}
+          // eslint-disable-next-line react/no-unknown-property
+          fetchpriority='high' // 修正为React的驼峰命名规范
+        >
           传承千年茶韵，体验自然与传统的完美融合
         </p>
       </div>

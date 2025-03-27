@@ -580,11 +580,13 @@ const Header = () => {
                 className='flex cursor-pointer flex-row items-center'
                 onClick={e => handleNavigation('/', e)}
               >
-                {/* 替换为SVG图标组件 */}
+                {/* 优化移动端Logo尺寸，根据屏幕尺寸调整 */}
                 <LogoIcon
-                  size={56}
+                  size={
+                    screenSize.isMobile ? 44 : screenSize.isTablet ? 50 : 56
+                  }
                   theme={theme}
-                  className='transition-colors duration-300'
+                  className='transition-all duration-300'
                 />
               </div>
             </NavbarBrand>
@@ -612,11 +614,11 @@ const Header = () => {
                 className='flex h-full cursor-pointer items-center'
                 onClick={e => handleNavigation('/', e)}
               >
-                {/* 替换为SVG图标组件 */}
+                {/* 优化大屏幕Logo尺寸，根据屏幕尺寸响应式调整 */}
                 <LogoIcon
-                  size={64}
+                  size={screenSize.isLargeDesktop ? 72 : 64}
                   theme={theme}
-                  className='mr-6 transition-colors duration-300'
+                  className='mr-4 transition-all duration-300 lg:mr-5 xl:mr-6'
                 />
               </div>
             </NavbarBrand>
