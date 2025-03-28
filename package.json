@@ -15,7 +15,11 @@
     "test-build": "vite build && serve -s dist"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/react-fontawesome": "^0.2.2",
     "@nextui-org/react": "^2.6.11",
     "@nextui-org/theme": "^2.4.5",
     "@tailwindcss/aspect-ratio": "^0.4.2",
