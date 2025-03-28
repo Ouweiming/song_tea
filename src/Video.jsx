@@ -9,9 +9,11 @@ import {
   useRef,
   useState,
 } from 'react'
+// 只导入需要的图标
 import { FiPlayCircle, FiX } from 'react-icons/fi'
 
 // 优先使用MP4格式作为最广泛支持的格式
+// 只导入需要使用的视频
 import video_mp4 from './assets/video.mp4'
 import video_1_mp4 from './assets/video_1.mp4'
 import useVideoStore from './stores/videoStore'
@@ -113,9 +115,38 @@ PlayButton.propTypes = {
   onClick: PropTypes.func.isRequired,
 }
 
+// 添加加载状态组件
+const LoadingIndicator = memo(() => (
+  <div className='absolute inset-0 flex items-center justify-center bg-black/30'>
+    <div className='rounded-md bg-black/60 px-4 py-2 text-sm text-white'>
+      视频加载中...
+    </div>
+  </div>
+))
+
+LoadingIndicator.displayName = 'LoadingIndicator'
+
+// 预加载视频资源 - 使用更可靠的方法代替不受支持的 as="video"
+const preloadVideo = src => {
+  if (!src) return
+
+  // 创建一个隐藏的 video 元素来预加载视频
+  const video = document.createElement('video')
+  video.preload = 'auto'
+  video.src = src
+  video.style.display = 'none'
+  video.load() // 开始缓冲视频
+
+  // 设置一个超时以防止内存泄漏
+  setTimeout(() => {
+    document.body.contains(video) && document.body.removeChild(video)
+  }, 5000)
+}
+
 // 优化VideoBackground组件
 const VideoBackground = () => {
   const backgroundVideoRef = useRef(null)
+  const [isBackgroundVideoLoading, setIsBackgroundVideoLoading] = useState(true)
 
   const {
     showVideo,
@@ -156,7 +187,12 @@ const VideoBackground = () => {
     setVideoError(true)
   }, [setVideoError])
 
+  const handleBackgroundVideoLoadStart = useCallback(() => {
+    setIsBackgroundVideoLoading(true)
+  }, [])
+
   const handleBackgroundVideoLoadedData = useCallback(() => {
+    setIsBackgroundVideoLoading(false)
     if (backgroundVideoRef.current) {
       backgroundVideoRef.current.playbackRate = 0.8
     }
@@ -165,6 +201,8 @@ const VideoBackground = () => {
   // 默认选择MP4格式
   useEffect(() => {
     setSelectedVideo(video_1_mp4)
+    preloadVideo(video_mp4)
+    preloadVideo(video_1_mp4)
   }, [setSelectedVideo])
 
   return (
@@ -199,18 +237,21 @@ const VideoBackground = () => {
               ) : (
                 <>
                   <div className='pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/20 to-transparent'></div>
-
+                  {isBackgroundVideoLoading && <LoadingIndicator />}
                   <video
                     ref={backgroundVideoRef}
                     autoPlay
                     muted
                     loop
                     playsInline
-                    preload='metadata'
+                    preload='auto'
                     className='absolute left-0 top-0 z-0 h-full w-full object-cover'
-                    onError={handleVideoError}
+                    onLoadStart={handleBackgroundVideoLoadStart}
                     onLoadedData={handleBackgroundVideoLoadedData}
+                    onError={handleVideoError}
                     aria-hidden='true'
+                    // eslint-disable-next-line react/no-unknown-property
+                    fetchpriority='high'
                   >
                     <source src={videoSource.src} type={videoSource.type} />
                     您的浏览器不支持视频标签

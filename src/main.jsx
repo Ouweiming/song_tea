@@ -1,4 +1,4 @@
-// 内联关键组件，避免首屏加载延迟
+// 精简导入
 import { Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 

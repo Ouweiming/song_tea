@@ -1,3 +1,4 @@
+// 只导入需要的图标
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useEffect, useRef, useState } from 'react'
@@ -40,10 +41,10 @@ const Footer = () => {
   }
 
   return (
-    <footer className='py-8 bg-white text-dark dark:bg-gray-800 dark:text-white'>
-      <div className='container px-4 mx-auto'>
+    <footer className='text-dark bg-white py-8 dark:bg-gray-800 dark:text-white'>
+      <div className='container mx-auto px-4'>
         <div className='flex flex-wrap justify-between'>
-          <div className='w-full mb-8 md:mb-0 md:w-1/3'>
+          <div className='mb-8 w-full md:mb-0 md:w-1/3'>
             <h2 className='mb-4 text-xl font-bold md:text-2xl'>联系信息</h2>
             <p>
               Email:{' '}
@@ -68,17 +69,17 @@ const Footer = () => {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder='您的电子邮件'
-                  className='w-full p-2 mb-2 mr-0 text-black rounded-md dark:bg-gray-700 dark:text-white md:mb-0 md:mr-2 md:w-2/3'
+                  className='mb-2 mr-0 w-full rounded-md p-2 text-black dark:bg-gray-700 dark:text-white md:mb-0 md:mr-2 md:w-2/3'
                   autoComplete='email'
                 />
                 <button
                   type='submit'
-                  className='w-full py-2 font-bold text-white bg-green-700 rounded-md hover:bg-green-800 md:w-1/3'
+                  className='w-full rounded-md bg-green-700 py-2 font-bold text-white hover:bg-green-800 md:w-1/3'
                 >
                   订阅
                 </button>
               </div>
-              <div className='h-6 mt-1'>
+              <div className='mt-1 h-6'>
                 {' '}
                 {/* 提供固定高度的容器 */}
                 {emailError && <p className='text-red-500'>{emailError}</p>}
@@ -88,7 +89,7 @@ const Footer = () => {
         </div>
 
         {/* 居中显示感谢订阅消息，预留固定高度 */}
-        <div className='h-10 mt-4 text-center'>
+        <div className='mt-4 h-10 text-center'>
           {' '}
           {/* 固定高度容器防止布局跳动 */}
           {subscribed && (
@@ -96,7 +97,7 @@ const Footer = () => {
           )}
         </div>
 
-        <div className='pt-8 mt-10 text-center border-t border-gray-700'>
+        <div className='mt-10 border-t border-gray-700 pt-8 text-center'>
           <p>&copy;2024 醉茶小皇帝. All Rights Reserved.</p>
           <p className='mt-2'>
             Made with{' '}

@@ -1,6 +1,8 @@
+// 使用精确导入方式减小体积
 import { Tooltip } from '@nextui-org/react'
 import PropTypes from 'prop-types'
 import React from 'react'
+// 导入单个图标而非整个库
 import { FaShoppingCart } from 'react-icons/fa'
 
 import OptimizedImage from './OptimizedImage'

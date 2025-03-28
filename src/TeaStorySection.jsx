@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
-import { useMemo } from 'react'
 
+// 移除 useMemo，因为ANIMATION_PRESETS是静态对象
 import Photowall from './Photowall'
 import village1Avif from './assets/village1.avif'
 import village1 from './assets/village1.jpg'
@@ -11,7 +11,6 @@ import village2Webp from './assets/village2.webp'
 import AnimatedImage from './components/AnimatedImage'
 import OptimizedImage from './components/OptimizedImage'
 import SectionTitle from './components/SectionTitle'
-import { useTheme } from './useTheme'
 
 // 封装动画配置为纯对象，避免重渲染时重新创建
 const ANIMATION_PRESETS = {
@@ -30,11 +29,9 @@ const ANIMATION_PRESETS = {
 }
 
 const TeaStorySection = () => {
-  useTheme()
-
-  // 直接使用动画配置，不再根据设备性能判断
-  const sectionAnimation = useMemo(() => ANIMATION_PRESETS.default, [])
-  const cardAnimation = useMemo(() => ANIMATION_PRESETS.card, [])
+  // 直接使用动画配置，不再使用useMemo
+  const sectionAnimation = ANIMATION_PRESETS.default
+  const cardAnimation = ANIMATION_PRESETS.card
 
   return (
     <section id='tea-story' className='overflow-hidden py-16 md:py-24'>

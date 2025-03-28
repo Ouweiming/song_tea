@@ -15,6 +15,7 @@ import React, {
   useRef,
   useState,
 } from 'react'
+// 只导入需要的图标
 import {
   FiHome,
   FiInfo,
@@ -27,7 +28,7 @@ import {
 // 导入SVG图标组件
 import LogoIcon from './icons/LogoIcon'
 import './index.css'
-// 使用我们自定义的hooks
+// 使用自定义的hooks
 import { useLocation, useNavigate } from './router-provider'
 // 导入新创建的Zustand store
 import useHeaderStore from './stores/headerStore'

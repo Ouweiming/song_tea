@@ -1,3 +1,4 @@
+// 仅保留必要的导入
 import { motion, useAnimation } from 'framer-motion'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useInView } from 'react-intersection-observer'
@@ -267,21 +268,21 @@ const Welcome = memo(() => {
 
   return (
     <div
-      className='relative w-full py-12 overflow-hidden md:py-16 lg:py-20'
+      className='relative w-full overflow-hidden py-12 md:py-16 lg:py-20'
       id='home-welcome'
     >
       {/* 背景装饰元素 - 条件渲染 */}
       {showAnimations && (
         <>
           <motion.div
-            className='absolute w-48 h-48 rounded-full -left-16 -top-16 bg-gradient-to-br from-emerald-500/5 to-teal-300/5 blur-2xl'
+            className='absolute -left-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-500/5 to-teal-300/5 blur-2xl'
             animate={backgroundAnimProps.first.animate}
             transition={backgroundAnimProps.first.transition}
             aria-hidden='true'
           />
 
           <motion.div
-            className='absolute w-48 h-48 rounded-full -bottom-32 -right-24 bg-gradient-to-tl from-teal-400/5 to-emerald-300/5 blur-2xl'
+            className='absolute -bottom-32 -right-24 h-48 w-48 rounded-full bg-gradient-to-tl from-teal-400/5 to-emerald-300/5 blur-2xl'
             animate={backgroundAnimProps.second.animate}
             transition={backgroundAnimProps.second.transition}
             aria-hidden='true'
@@ -289,14 +290,14 @@ const Welcome = memo(() => {
         </>
       )}
 
-      <div className='relative max-w-4xl px-6 mx-auto text-center'>
+      <div className='relative mx-auto max-w-4xl px-6 text-center'>
         {/* 装饰元素与描述文本 - 优先渲染文本 */}
         {renderHeartIcon()}
 
         {/* 将文本提前渲染并添加ref以作为LCP指标元素 - 修正fetchPriority属性名 */}
         <p
           ref={textRef}
-          className='max-w-xl mx-auto text-base font-medium leading-relaxed text-center text-gray-700 dark:text-gray-300 sm:max-w-2xl sm:text-lg md:text-xl'
+          className='mx-auto max-w-xl text-center text-base font-medium leading-relaxed text-gray-700 dark:text-gray-300 sm:max-w-2xl sm:text-lg md:text-xl'
           data-lcp='true'
           style={{ contentVisibility: 'auto' }}
           // eslint-disable-next-line react/no-unknown-property
